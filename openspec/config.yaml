@@ -1,20 +1,46 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Project: Automated job application pipeline for the Finnish job market.
+  Monitors RSS feeds from Finnish job boards, uses Claude Haiku (via Vercel AI SDK) to match
+  listings against a candidate profile, generates tailored CVs and cover letters, renders them
+  to PDF with Puppeteer, and sends a daily digest email.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Tech stack:
+  - Backend: NestJS, MikroORM, PostgreSQL, Redis, Bull (@nestjs/bull)
+  - Frontend: Nuxt 3 (Vue 3)
+  - LLM: Claude Haiku (claude-haiku-4-5-20251001) via @ai-sdk/anthropic + Vercel AI SDK (generateObject)
+  - PDF: Puppeteer (HTML templates → PDF in memory, not persisted)
+  - Email: Nodemailer (SMTP, daily digest)
+  - API spec: JSON:API via @klerick/nestjs-json-api
+  - Package manager: Yarn 4.13.0
+
+  Monorepo structure:
+  - apps/api/        — NestJS backend (REST API, Bull workers, cron jobs)
+  - apps/web/        — Nuxt 3 admin UI
+  - packages/shared/ — shared TypeScript types
+  - docker/          — Dockerfiles for API and web
+
+  NestJS modules: AuthModule, CvModule, PreferencesModule, JobSourcesModule,
+  IngestionModule, MatchingModule, GenerationModule, DocumentModule,
+  NotificationModule, ApplicationsModule
+
+  Key entities: CvProfile, JobPreferences, JobSourcePreset, JobSource, JobListing, JobApplication
+
+  Pipeline queues (Bull/Redis): ingestion → matching → generation → document → notification
+
+  Code style:
+  - ESLint: @juuso.piikkila/eslint-config-typescript
+  - Prettier: default config, enforced via ESLint
+  - Indent: 4 spaces
+  - Conventional commits
+
+rules:
+  proposal:
+    - Keep proposals concise and focused on a single concern
+    - Include affected modules and entities
+    - Note if changes touch the LLM pipeline (matching/generation queues)
+  tasks:
+    - Break tasks into chunks scoped to a single NestJS module where possible
+    - Note database migration requirements separately
+    - Flag any Bull queue schema changes that require worker restarts
