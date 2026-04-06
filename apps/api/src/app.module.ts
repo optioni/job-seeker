@@ -9,7 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         MikroOrmModule.forRoot(),
         BullModule.forRootAsync({
             useFactory: () => ({
-                redis: process.env.REDIS_URL ?? 'redis://localhost:6379',
+                url: process.env.REDIS_URL ?? 'redis://localhost:6379',
             }),
         }),
         ScheduleModule.forRoot(),

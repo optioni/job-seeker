@@ -39,6 +39,7 @@
         "zod": "^3.0.0"
     },
     "devDependencies": {
+        "@mikro-orm/cli": "^6.0.0",
         "@nestjs/cli": "^10.0.0",
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
