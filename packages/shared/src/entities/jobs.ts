@@ -1,4 +1,4 @@
-import type { CvProfile } from './cv.js';
+import type { CvProfile } from './cv';
 
 export interface JobPreferences {
     id: string;

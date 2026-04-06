@@ -1,4 +1,4 @@
-import type { JobListing } from './entities/jobs.js';
+import type { JobListing } from './entities/jobs';
 
 export interface IngestionJobPayload {
     sourceId: string;
@@ -19,6 +19,4 @@ export interface DocumentJobPayload {
 
 export interface NotificationJobPayload {
     applicationId: string;
-    cvPdfBuffer: Buffer;
-    coverLetterPdfBuffer: Buffer;
 }
