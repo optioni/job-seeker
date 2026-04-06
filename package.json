@@ -1,4 +1,9 @@
 {
-  "name": "job-seeker",
-  "packageManager": "yarn@4.13.0"
+    "name": "job-seeker",
+    "packageManager": "yarn@4.13.0",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ]
 }
