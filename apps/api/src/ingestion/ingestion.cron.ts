@@ -33,7 +33,7 @@ export class IngestionCron {
 
     private async pollSource(source: JobSource) {
         const urlParams: Record<string, string> = {};
-        for (const [key, value] of Object.entries(source.filters)) {
+        for (const [key, value] of Object.entries(source.filters ?? {})) {
             const urlKey = source.preset.filterConfig[key];
             if (urlKey) urlParams[urlKey] = value;
         }

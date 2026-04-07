@@ -27,7 +27,11 @@ export class RssAdapter {
             externalId: item.guid ?? item.link ?? '',
             url: item.link ?? '',
             title: item.title ?? '',
-            company: item.creator ?? (item as Record<string, unknown>)['dc:creator'] as string ?? '',
+            // NOTE: Company field is not standardized in RSS. Finnish job boards may encode
+            // it differently. Board-specific adapters can override this mapping if needed.
+            company: (item as Record<string, unknown>)['company'] as string
+                ?? item.creator
+                ?? '',
             description: item.contentSnippet ?? item.content ?? (item as Record<string, unknown>)['summary'] as string ?? '',
             scrapedAt: new Date(),
             publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
