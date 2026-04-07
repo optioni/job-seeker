@@ -9,6 +9,8 @@ import { CvModule } from './cv/cv.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
 import { IngestionModule } from './ingestion/ingestion.module';
+import { MatchingModule } from './matching/matching.module';
+import { GenerationModule } from './generation/generation.module';
 
 @Module({
     imports: [
@@ -24,12 +26,8 @@ import { IngestionModule } from './ingestion/ingestion.module';
         PreferencesModule,
         JobSourcesModule,
         IngestionModule,
-        // Feature modules will be added here:
-        // MatchingModule,
-        // GenerationModule,
-        // DocumentModule,
-        // NotificationModule,
-        // ApplicationsModule,
+        MatchingModule,
+        GenerationModule,
     ],
     providers: [
         { provide: APP_GUARD, useClass: JwtAuthGuard },
