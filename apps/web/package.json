@@ -1,0 +1,20 @@
+{
+    "name": "@job-seeker/web",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "nuxt build",
+        "dev": "nuxt dev --port 3001",
+        "generate": "nuxt generate",
+        "preview": "nuxt preview"
+    },
+    "dependencies": {
+        "nuxt": "^3.11.0",
+        "vue": "^3.4.0",
+        "@job-seeker/shared": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.0.0"
+    }
+}
