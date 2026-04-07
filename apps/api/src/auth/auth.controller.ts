@@ -6,11 +6,16 @@ import {
     HttpStatus,
     Post,
 } from '@nestjs/common';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 
 class AuthDto {
+    @IsEmail()
     email!: string;
+
+    @IsString()
+    @MinLength(8)
     password!: string;
 }
 
