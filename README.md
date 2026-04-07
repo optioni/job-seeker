@@ -93,7 +93,6 @@ Open `.env` and fill in the required values:
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP credentials for digest emails |
 | `SMTP_FROM` | From address for outgoing email |
 | `REGISTRATION_ENABLED` | Set to `false` after creating your account to disable new sign-ups |
-| `DIGEST_CRON` | Cron schedule for digest emails (default: `0 8 * * *`) |
 
 `GOTENBERG_URL` and Docker service hostnames are set automatically in `docker-compose.yml` — leave them as-is.
 

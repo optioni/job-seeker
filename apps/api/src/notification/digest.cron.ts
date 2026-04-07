@@ -24,7 +24,7 @@ export class DigestCron {
         this.coverLetterTemplate = fs.readFileSync(path.join(templatesDir, 'cover-letter.html'), 'utf-8');
     }
 
-    @Cron(process.env.DIGEST_CRON ?? '0 8 * * *')
+    @Cron('0 8 * * *')
     async sendDigest() {
         const em = this.em.fork();
         const applications = await em.find(
