@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CvModule } from './cv/cv.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
+import { IngestionModule } from './ingestion/ingestion.module';
 
 @Module({
     imports: [
@@ -22,8 +23,8 @@ import { JobSourcesModule } from './job-sources/job-sources.module';
         CvModule,
         PreferencesModule,
         JobSourcesModule,
+        IngestionModule,
         // Feature modules will be added here:
-        // IngestionModule,
         // MatchingModule,
         // GenerationModule,
         // DocumentModule,
