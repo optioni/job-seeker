@@ -12,6 +12,8 @@ import { IngestionModule } from './ingestion/ingestion.module';
 import { MatchingModule } from './matching/matching.module';
 import { GenerationModule } from './generation/generation.module';
 import { DocumentModule } from './document/document.module';
+import { NotificationModule } from './notification/notification.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
     imports: [
@@ -30,6 +32,8 @@ import { DocumentModule } from './document/document.module';
         MatchingModule,
         GenerationModule,
         DocumentModule,
+        NotificationModule,
+        ApplicationsModule,
     ],
     providers: [
         { provide: APP_GUARD, useClass: JwtAuthGuard },
