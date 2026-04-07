@@ -11,6 +11,7 @@ import { JobSourcesModule } from './job-sources/job-sources.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { MatchingModule } from './matching/matching.module';
 import { GenerationModule } from './generation/generation.module';
+import { DocumentModule } from './document/document.module';
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { GenerationModule } from './generation/generation.module';
         IngestionModule,
         MatchingModule,
         GenerationModule,
+        DocumentModule,
     ],
     providers: [
         { provide: APP_GUARD, useClass: JwtAuthGuard },
