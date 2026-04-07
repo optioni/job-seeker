@@ -5,6 +5,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { CvModule } from './cv/cv.module';
+import { PreferencesModule } from './preferences/preferences.module';
+import { JobSourcesModule } from './job-sources/job-sources.module';
 
 @Module({
     imports: [
@@ -16,10 +19,10 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
         }),
         ScheduleModule.forRoot(),
         AuthModule,
+        CvModule,
+        PreferencesModule,
+        JobSourcesModule,
         // Feature modules will be added here:
-        // CvModule,
-        // PreferencesModule,
-        // JobSourcesModule,
         // IngestionModule,
         // MatchingModule,
         // GenerationModule,
