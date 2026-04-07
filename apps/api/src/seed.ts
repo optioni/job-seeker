@@ -72,7 +72,9 @@ async function seed(): Promise<void> {
     }
 }
 
-seed().catch((err: unknown) => {
-    console.error('Seed failed:', err);
-    process.exit(1);
-});
+seed()
+    .then(() => process.exit(0))
+    .catch((err: unknown) => {
+        console.error('Seed failed:', err);
+        process.exit(1);
+    });

@@ -1,4 +1,4 @@
-import { Entity, Index, ManyToOne, OneToOne, PrimaryKey, Property, Unique } from '@mikro-orm/core';
+import { Entity, ManyToOne, OneToOne, PrimaryKey, Property, Unique } from '@mikro-orm/core';
 import { JobSource } from './job-source.entity';
 import { JobApplication } from './job-application.entity';
 

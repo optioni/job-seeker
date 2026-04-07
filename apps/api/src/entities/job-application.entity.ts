@@ -6,7 +6,7 @@ export class JobApplication {
     @PrimaryKey({ type: 'uuid' })
     id: string = crypto.randomUUID();
 
-    @OneToOne(() => JobListing, (listing) => listing.application)
+    @OneToOne(() => JobListing, (listing) => listing.application, { owner: true })
     listing!: JobListing;
 
     @Property()

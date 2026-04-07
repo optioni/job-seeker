@@ -6,7 +6,7 @@ export class JobPreferences {
     @PrimaryKey({ type: 'uuid' })
     id: string = crypto.randomUUID();
 
-    @OneToOne(() => User, (user) => user.jobPreferences)
+    @OneToOne(() => User, (user) => user.jobPreferences, { owner: true })
     user!: User;
 
     @Property({ type: 'json' })
