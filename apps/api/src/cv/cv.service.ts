@@ -43,7 +43,10 @@ export class CvService {
     }
 
     async updateProfile(userId: string, profileId: string, data: Partial<CvProfile>): Promise<CvProfile> {
-        const profile = await this.cvProfileRepo.findOne({ id: profileId });
+        const profile = await this.cvProfileRepo.findOne(
+            { id: profileId },
+            { populate: ['user'] as const },
+        );
         if (!profile || profile.user.id !== userId) {
             throw new NotFoundException('CV profile not found');
         }
