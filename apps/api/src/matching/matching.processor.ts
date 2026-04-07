@@ -28,21 +28,22 @@ export class MatchingProcessor {
 
     @Process()
     async handle(job: Job<MatchingJobPayload>) {
+        const em = this.em.fork();
         const { listingId } = job.data;
 
-        const listing = await this.em.findOneOrFail(JobListing, listingId, {
+        const listing = await em.findOneOrFail(JobListing, listingId, {
             populate: ['source', 'source.user', 'source.preset'] as const,
         });
 
         const userId = listing.source.user.id;
 
-        const cvProfile = await this.em.findOne(
+        const cvProfile = await em.findOne(
             CvProfile,
             { user: userId },
             { populate: ['workExperiences', 'educations', 'skills', 'languages', 'certifications', 'projects'] as const },
         );
 
-        const preferences = await this.em.findOne(JobPreferences, { user: userId });
+        const preferences = await em.findOne(JobPreferences, { user: userId });
 
         const language = listing.source.language ?? preferences?.defaultLanguage ?? 'fi';
         const languageInstruction = language === 'fi'
@@ -75,7 +76,7 @@ Provide a match decision (true/false), a score from 0-100, and a rationale.
             prompt,
         });
 
-        const application = this.em.create(JobApplication, {
+        const application = em.create(JobApplication, {
             listing,
             matched: result.match,
             matchScore: result.score,
@@ -83,7 +84,7 @@ Provide a match decision (true/false), a score from 0-100, and a rationale.
             createdAt: new Date(),
         });
 
-        await this.em.persistAndFlush(application);
+        await em.persistAndFlush(application);
 
         if (result.match) {
             const payload: GenerationJobPayload = { applicationId: application.id };

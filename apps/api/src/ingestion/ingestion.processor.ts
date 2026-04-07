@@ -19,11 +19,12 @@ export class IngestionProcessor {
 
     @Process()
     async handle(job: Job<IngestionJobPayload>) {
+        const em = this.em.fork();
         const { sourceId, listing } = job.data;
 
-        const source = this.em.getReference(JobSource, sourceId);
+        const source = em.getReference(JobSource, sourceId);
 
-        const jobListing = this.em.create(JobListing, {
+        const jobListing = em.create(JobListing, {
             source,
             externalId: listing.externalId,
             url: listing.url,
@@ -34,7 +35,7 @@ export class IngestionProcessor {
             publishedAt: listing.publishedAt ? new Date(listing.publishedAt) : undefined,
         });
 
-        await this.em.persistAndFlush(jobListing);
+        await em.persistAndFlush(jobListing);
 
         const payload: MatchingJobPayload = { listingId: jobListing.id };
         await this.matchingQueue.add(payload);

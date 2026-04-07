@@ -20,18 +20,19 @@ export class IngestionCron {
 
     @Cron(CronExpression.EVERY_HOUR)
     async pollAllSources() {
-        const sources = await this.em.find(JobSource, { active: true }, { populate: ['preset'] });
+        const em = this.em.fork();
+        const sources = await em.find(JobSource, { active: true }, { populate: ['preset'] });
 
         for (const source of sources) {
             try {
-                await this.pollSource(source);
+                await this.pollSource(source, em);
             } catch (err) {
                 this.logger.error(`Failed to poll source ${source.id}: ${String(err)}`);
             }
         }
     }
 
-    private async pollSource(source: JobSource) {
+    private async pollSource(source: JobSource, em: EntityManager) {
         const urlParams: Record<string, string> = {};
         for (const [key, value] of Object.entries(source.filters ?? {})) {
             const urlKey = source.preset.filterConfig[key];
@@ -40,7 +41,7 @@ export class IngestionCron {
 
         const candidates = await this.rssAdapter.fetchListings(source.preset.baseUrl, urlParams);
 
-        const existing = await this.em.find(JobListing, { source });
+        const existing = await em.find(JobListing, { source });
         const existingSet = new Set(existing.map(l => `${l.company}|${l.title}`));
 
         const newCandidates = candidates.filter(

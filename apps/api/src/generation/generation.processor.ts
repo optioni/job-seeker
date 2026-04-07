@@ -55,21 +55,22 @@ export class GenerationProcessor {
 
     @Process()
     async handle(job: Job<GenerationJobPayload>) {
+        const em = this.em.fork();
         const { applicationId } = job.data;
 
-        const application = await this.em.findOneOrFail(JobApplication, applicationId, {
+        const application = await em.findOneOrFail(JobApplication, applicationId, {
             populate: ['listing', 'listing.source', 'listing.source.user'] as const,
         });
 
         const userId = application.listing.source.user.id;
 
-        const cvProfile = await this.em.findOneOrFail(
+        const cvProfile = await em.findOneOrFail(
             CvProfile,
             { user: userId },
             { populate: ['workExperiences', 'educations', 'skills', 'languages', 'certifications', 'projects'] as const },
         );
 
-        const preferences = await this.em.findOne(JobPreferences, { user: userId });
+        const preferences = await em.findOne(JobPreferences, { user: userId });
 
         const language = application.listing.source.language ?? preferences?.defaultLanguage ?? 'fi';
         const languageInstruction = language === 'fi'
@@ -120,7 +121,7 @@ Write only the cover letter text, no subject line or metadata.
 
         application.tailoredCvSnapshot = tailoredCv as Record<string, unknown>;
         application.coverLetterText = coverLetterText;
-        await this.em.flush();
+        await em.flush();
 
         const payload: DocumentJobPayload = { applicationId: application.id };
         await this.documentQueue.add(payload);
