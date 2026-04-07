@@ -29,13 +29,8 @@ export class DigestCron {
         const em = this.em.fork();
         const applications = await em.find(
             JobApplication,
-            {
-                matched: true,
-                emailedAt: null,
-            },
-            {
-                populate: ['listing', 'listing.source'] as const,
-            },
+            { matched: true, emailedAt: null },
+            { populate: ['listing', 'listing.source', 'listing.source.user'] as const },
         );
 
         if (applications.length === 0) {
@@ -43,42 +38,15 @@ export class DigestCron {
             return;
         }
 
-        const recipient = process.env.DIGEST_RECIPIENT;
-        if (!recipient) {
-            this.logger.error('DIGEST_RECIPIENT not set, skipping digest');
-            return;
+        // Group by user so each user gets their own email
+        const byUser = new Map<string, typeof applications>();
+        for (const app of applications) {
+            const userId = app.listing.source.user.id;
+            if (!byUser.has(userId)) byUser.set(userId, []);
+            byUser.get(userId)!.push(app);
         }
 
         const gotenbergUrl = process.env.GOTENBERG_URL ?? 'http://gotenberg:3000';
-
-        const attachments: Array<{ filename: string; content: Buffer }> = [];
-        const bodyLines: string[] = [`<h2>Job Application Digest — ${new Date().toDateString()}</h2>`];
-
-        for (const app of applications) {
-            const listing = app.listing;
-            bodyLines.push(`
-                <h3>${listing.title} at ${listing.company}</h3>
-                <p>Match score: ${app.matchScore ?? 'N/A'}</p>
-                <p>Rationale: ${app.matchRationale ?? 'N/A'}</p>
-                <p><a href="${listing.url}">View listing</a></p>
-            `);
-
-            if (app.tailoredCvSnapshot) {
-                const cvHtml = this.renderCvHtml(app.tailoredCvSnapshot, this.cvTemplate);
-                const cvPdf = await this.htmlToPdf(gotenbergUrl, cvHtml);
-                attachments.push({ filename: `cv-${app.id}.pdf`, content: cvPdf });
-            }
-
-            if (app.coverLetterText) {
-                const coverHtml = this.coverLetterTemplate.replace(
-                    '{{coverLetterText}}',
-                    app.coverLetterText.replace(/\n/g, '<br>'),
-                );
-                const coverPdf = await this.htmlToPdf(gotenbergUrl, coverHtml);
-                attachments.push({ filename: `cover-letter-${app.id}.pdf`, content: coverPdf });
-            }
-        }
-
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: parseInt(process.env.SMTP_PORT ?? '587'),
@@ -88,20 +56,52 @@ export class DigestCron {
             },
         });
 
-        await transporter.sendMail({
-            from: process.env.SMTP_FROM,
-            to: recipient,
-            subject: `Job Application Digest — ${applications.length} match(es)`,
-            html: bodyLines.join(''),
-            attachments,
-        });
+        for (const [, userApps] of byUser) {
+            const recipient = userApps[0].listing.source.user.email;
+            const attachments: Array<{ filename: string; content: Buffer }> = [];
+            const bodyLines: string[] = [`<h2>Job Application Digest — ${new Date().toDateString()}</h2>`];
 
-        for (const app of applications) {
-            app.emailedAt = new Date();
+            for (const app of userApps) {
+                const listing = app.listing;
+                bodyLines.push(`
+                    <h3>${listing.title} at ${listing.company}</h3>
+                    <p>Match score: ${app.matchScore ?? 'N/A'}</p>
+                    <p>Rationale: ${app.matchRationale ?? 'N/A'}</p>
+                    <p><a href="${listing.url}">View listing</a></p>
+                `);
+
+                if (app.tailoredCvSnapshot) {
+                    const cvHtml = this.renderCvHtml(app.tailoredCvSnapshot, this.cvTemplate);
+                    const cvPdf = await this.htmlToPdf(gotenbergUrl, cvHtml);
+                    attachments.push({ filename: `cv-${app.id}.pdf`, content: cvPdf });
+                }
+
+                if (app.coverLetterText) {
+                    const coverHtml = this.coverLetterTemplate.replace(
+                        '{{coverLetterText}}',
+                        app.coverLetterText.replace(/\n/g, '<br>'),
+                    );
+                    const coverPdf = await this.htmlToPdf(gotenbergUrl, coverHtml);
+                    attachments.push({ filename: `cover-letter-${app.id}.pdf`, content: coverPdf });
+                }
+            }
+
+            await transporter.sendMail({
+                from: process.env.SMTP_FROM,
+                to: recipient,
+                subject: `Job Application Digest — ${userApps.length} match(es)`,
+                html: bodyLines.join(''),
+                attachments,
+            });
+
+            for (const app of userApps) {
+                app.emailedAt = new Date();
+            }
+
+            this.logger.log(`Digest sent: ${userApps.length} applications to ${recipient}`);
         }
-        await em.flush();
 
-        this.logger.log(`Digest sent: ${applications.length} applications to ${recipient}`);
+        await em.flush();
     }
 
     private renderCvHtml(cv: Record<string, unknown>, template: string): string {

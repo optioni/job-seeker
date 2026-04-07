@@ -92,7 +92,6 @@ Open `.env` and fill in the required values:
 | `JWT_SECRET` | Secret for signing JWTs — use a long random string |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP credentials for digest emails |
 | `SMTP_FROM` | From address for outgoing email |
-| `DIGEST_RECIPIENT` | Email address to receive daily digests |
 | `REGISTRATION_ENABLED` | Set to `false` after creating your account to disable new sign-ups |
 | `DIGEST_CRON` | Cron schedule for digest emails (default: `0 8 * * *`) |
 
