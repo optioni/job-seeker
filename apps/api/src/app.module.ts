@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
     imports: [
@@ -12,8 +15,8 @@ import { ScheduleModule } from '@nestjs/schedule';
             }),
         }),
         ScheduleModule.forRoot(),
+        AuthModule,
         // Feature modules will be added here:
-        // AuthModule,
         // CvModule,
         // PreferencesModule,
         // JobSourcesModule,
@@ -23,6 +26,9 @@ import { ScheduleModule } from '@nestjs/schedule';
         // DocumentModule,
         // NotificationModule,
         // ApplicationsModule,
+    ],
+    providers: [
+        { provide: APP_GUARD, useClass: JwtAuthGuard },
     ],
 })
 export class AppModule {}
