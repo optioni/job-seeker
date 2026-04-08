@@ -1,6 +1,634 @@
+<template>
+    <div>
+        <h1
+            class="text-3xl font-semibold italic mb-6"
+            style="font-family: var(--font-display); color: var(--color-text-default)"
+        >
+            CV Editor
+        </h1>
+
+        <p v-if="loadError"
+            class="text-sm mb-4"
+            style="color: var(--color-error)">
+            {{ loadError }}
+        </p>
+
+        <!-- Personal Info + Summary -->
+        <div
+            class="border rounded-xl p-6 mb-6"
+            style="background-color: var(--color-card); border-color: var(--color-border)"
+        >
+            <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
+                style="color: var(--color-text-faint)">
+                Personal Information
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <UFormField label="Full Name"
+                    name="fullName">
+                    <UInput v-model="profile.personalInfo.fullName"
+                        type="text"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="Email"
+                    name="email">
+                    <UInput v-model="profile.personalInfo.email"
+                        type="email"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="Phone"
+                    name="phone">
+                    <UInput v-model="profile.personalInfo.phone"
+                        type="tel"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="Address"
+                    name="address">
+                    <UInput v-model="profile.personalInfo.address"
+                        type="text"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="LinkedIn"
+                    name="linkedIn">
+                    <UInput v-model="profile.personalInfo.linkedIn"
+                        type="url"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="GitHub"
+                    name="github">
+                    <UInput v-model="profile.personalInfo.github"
+                        type="url"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField label="Website"
+                    name="website"
+                    class="col-span-2">
+                    <UInput v-model="profile.personalInfo.website"
+                        type="url"
+                        class="w-full" />
+                </UFormField>
+            </div>
+
+            <UFormField label="Summary"
+                name="summary"
+                class="mb-4">
+                <UTextarea
+                    v-model="profile.summary"
+                    :rows="5"
+                    placeholder="Professional summary..."
+                    class="w-full"
+                />
+            </UFormField>
+
+            <div class="flex items-center gap-4">
+                <UButton color="primary"
+                    variant="solid"
+                    :loading="saving"
+                    @click="saveProfile">
+                    Save Profile
+                </UButton>
+
+                <span
+                    v-if="saveMessage"
+                    class="text-sm"
+                    :style="{ color: saveFailed ? 'var(--color-error)' : 'var(--color-success)' }"
+                >{{ saveMessage }}</span>
+            </div>
+        </div>
+
+        <!-- Accordion sections -->
+        <UAccordion :items="accordionItems"
+            multiple>
+            <!-- Work Experience -->
+            <template #work>
+                <div class="px-1 pb-4">
+                    <!-- Add form -->
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Entry
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Company"
+                                name="company">
+                                <UInput v-model="newWork.company"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Title"
+                                name="title">
+                                <UInput v-model="newWork.title"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Start Date"
+                                name="startDate">
+                                <UInput v-model="newWork.startDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="End Date"
+                                name="endDate">
+                                <UInput v-model="newWork.endDate"
+                                    type="date"
+                                    :disabled="newWork.current"
+                                    class="w-full" />
+                            </UFormField>
+                        </div>
+
+                        <div class="flex items-center gap-2 mb-3">
+                            <UCheckbox v-model="newWork.current"
+                                label="Currently working here" />
+                        </div>
+
+                        <UFormField label="Description"
+                            name="description"
+                            class="mb-3">
+                            <UTextarea v-model="newWork.description"
+                                :rows="3"
+                                class="w-full" />
+                        </UFormField>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addWorkExperience">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <!-- List -->
+                    <div class="flex flex-col gap-3">
+                        <div
+                            v-for="w in profile.workExperiences"
+                            :key="w.id"
+                            class="flex items-start justify-between border rounded-xl p-4"
+                            style="background-color: var(--color-background); border-color: var(--color-border)"
+                        >
+                            <div>
+                                <p class="font-semibold text-sm"
+                                    style="color: var(--color-text-default)">
+                                    {{ w.title }} at {{ w.company }}
+                                </p>
+
+                                <p class="text-xs mt-0.5"
+                                    style="color: var(--color-text-faint)">
+                                    {{ w.startDate }} – {{ w.current ? 'Present' : w.endDate }}
+                                </p>
+
+                                <p v-if="w.description"
+                                    class="text-sm mt-1"
+                                    style="color: var(--color-text-muted)">
+                                    {{ w.description }}
+                                </p>
+                            </div>
+
+                            <UButton color="error"
+                                variant="soft"
+                                size="xs"
+                                @click="deleteWorkExperience(w.id!)">
+                                Delete
+                            </UButton>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Education -->
+            <template #education>
+                <div class="px-1 pb-4">
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Entry
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Institution"
+                                name="institution">
+                                <UInput v-model="newEducation.institution"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Degree"
+                                name="degree">
+                                <UInput v-model="newEducation.degree"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Field of Study"
+                                name="field">
+                                <UInput v-model="newEducation.field"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Start Date"
+                                name="startDate">
+                                <UInput v-model="newEducation.startDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="End Date"
+                                name="endDate">
+                                <UInput v-model="newEducation.endDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+                        </div>
+
+                        <UFormField label="Description"
+                            name="description"
+                            class="mb-3">
+                            <UTextarea v-model="newEducation.description"
+                                :rows="3"
+                                class="w-full" />
+                        </UFormField>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addEducation">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div
+                            v-for="e in profile.educations"
+                            :key="e.id"
+                            class="flex items-start justify-between border rounded-xl p-4"
+                            style="background-color: var(--color-background); border-color: var(--color-border)"
+                        >
+                            <div>
+                                <p class="font-semibold text-sm"
+                                    style="color: var(--color-text-default)">
+                                    {{ e.degree }} in {{ e.field }}, {{ e.institution }}
+                                </p>
+
+                                <p class="text-xs mt-0.5"
+                                    style="color: var(--color-text-faint)">
+                                    {{ e.startDate }} – {{ e.endDate }}
+                                </p>
+                            </div>
+
+                            <UButton color="error"
+                                variant="soft"
+                                size="xs"
+                                @click="deleteEducation(e.id!)">
+                                Delete
+                            </UButton>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Skills -->
+            <template #skills>
+                <div class="px-1 pb-4">
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Skill
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Skill"
+                                name="skillName">
+                                <UInput v-model="newSkill.name"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Level"
+                                name="skillLevel">
+                                <USelect
+                                    v-model="newSkill.level"
+                                    :items="skillLevelOptions"
+                                    value-key="value"
+                                    label-key="label"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                        </div>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addSkill">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <span
+                            v-for="s in profile.skills"
+                            :key="s.id"
+                            class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm"
+                            :style="{
+                                backgroundColor: 'var(--color-accent-tint)',
+                                borderColor: 'var(--color-accent)',
+                                color: 'var(--color-accent)',
+                            }"
+                        >
+                            {{ s.name }} <em class="text-xs not-italic opacity-70">({{ s.level }})</em>
+
+                            <button
+                                type="button"
+                                class="ml-1 text-xs hover:opacity-70 transition-opacity"
+                                @click="deleteSkill(s.id!)"
+                            >×</button>
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Languages -->
+            <template #languages>
+                <div class="px-1 pb-4">
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Language
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Language"
+                                name="langName">
+                                <UInput v-model="newLanguage.name"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Level"
+                                name="langLevel">
+                                <USelect
+                                    v-model="newLanguage.level"
+                                    :items="languageLevelOptions"
+                                    value-key="value"
+                                    label-key="label"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                        </div>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addLanguage">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <span
+                            v-for="l in profile.languages"
+                            :key="l.id"
+                            class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm"
+                            :style="{
+                                backgroundColor: 'var(--color-accent-tint)',
+                                borderColor: 'var(--color-accent)',
+                                color: 'var(--color-accent)',
+                            }"
+                        >
+                            {{ l.name }} <em class="text-xs not-italic opacity-70">({{ l.level }})</em>
+
+                            <button
+                                type="button"
+                                class="ml-1 text-xs hover:opacity-70 transition-opacity"
+                                @click="deleteLanguage(l.id!)"
+                            >×</button>
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Certifications -->
+            <template #certifications>
+                <div class="px-1 pb-4">
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Certification
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Name"
+                                name="certName">
+                                <UInput v-model="newCert.name"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Issuer"
+                                name="certIssuer">
+                                <UInput v-model="newCert.issuer"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Issue Date"
+                                name="certIssueDate">
+                                <UInput v-model="newCert.issueDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Expiry Date"
+                                name="certExpiryDate">
+                                <UInput v-model="newCert.expiryDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="URL"
+                                name="certUrl"
+                                class="col-span-2">
+                                <UInput v-model="newCert.url"
+                                    type="url"
+                                    class="w-full" />
+                            </UFormField>
+                        </div>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addCertification">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div
+                            v-for="c in profile.certifications"
+                            :key="c.id"
+                            class="flex items-start justify-between border rounded-xl p-4"
+                            style="background-color: var(--color-background); border-color: var(--color-border)"
+                        >
+                            <div>
+                                <p class="font-semibold text-sm"
+                                    style="color: var(--color-text-default)">
+                                    {{ c.name }} — {{ c.issuer }}
+                                </p>
+
+                                <p class="text-xs mt-0.5"
+                                    style="color: var(--color-text-faint)">
+                                    {{ c.issueDate }}<span v-if="c.expiryDate"> – {{ c.expiryDate }}</span>
+                                </p>
+
+                                <a v-if="c.url"
+                                    :href="c.url"
+                                    target="_blank"
+                                    class="text-xs"
+                                    style="color: var(--color-accent)">View</a>
+                            </div>
+
+                            <UButton color="error"
+                                variant="soft"
+                                size="xs"
+                                @click="deleteCertification(c.id!)">
+                                Delete
+                            </UButton>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Projects -->
+            <template #projects>
+                <div class="px-1 pb-4">
+                    <div
+                        class="border rounded-xl p-4 mb-4"
+                        style="background-color: var(--color-background); border-color: var(--color-border)"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-widest mb-3"
+                            style="color: var(--color-text-faint)">
+                            Add Project
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <UFormField label="Name"
+                                name="projectName">
+                                <UInput v-model="newProject.name"
+                                    type="text"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="URL"
+                                name="projectUrl">
+                                <UInput v-model="newProject.url"
+                                    type="url"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Start Date"
+                                name="projectStartDate">
+                                <UInput v-model="newProject.startDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="End Date"
+                                name="projectEndDate">
+                                <UInput v-model="newProject.endDate"
+                                    type="date"
+                                    class="w-full" />
+                            </UFormField>
+                        </div>
+
+                        <UFormField label="Description"
+                            name="projectDescription"
+                            class="mb-3">
+                            <UTextarea v-model="newProject.description"
+                                :rows="3"
+                                class="w-full" />
+                        </UFormField>
+
+                        <UButton color="primary"
+                            variant="solid"
+                            size="sm"
+                            @click="addProject">
+                            Add
+                        </UButton>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div
+                            v-for="p in profile.projects"
+                            :key="p.id"
+                            class="flex items-start justify-between border rounded-xl p-4"
+                            style="background-color: var(--color-background); border-color: var(--color-border)"
+                        >
+                            <div>
+                                <p class="font-semibold text-sm"
+                                    style="color: var(--color-text-default)">
+                                    {{ p.name }}
+                                </p>
+
+                                <p class="text-xs mt-0.5"
+                                    style="color: var(--color-text-faint)">
+                                    {{ p.startDate }}<span v-if="p.endDate"> – {{ p.endDate }}</span>
+                                </p>
+
+                                <a v-if="p.url"
+                                    :href="p.url"
+                                    target="_blank"
+                                    class="text-xs"
+                                    style="color: var(--color-accent)">View</a>
+
+                                <p v-if="p.description"
+                                    class="text-sm mt-1"
+                                    style="color: var(--color-text-muted)">
+                                    {{ p.description }}
+                                </p>
+                            </div>
+
+                            <UButton color="error"
+                                variant="soft"
+                                size="xs"
+                                @click="deleteProject(p.id!)">
+                                Delete
+                            </UButton>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </UAccordion>
+    </div>
+</template>
+
 <script setup lang="ts">
+definePageMeta({ layout: 'default' })
+
 const { apiFetch } = useApi()
-const { logout } = useAuth()
 
 interface PersonalInfo {
     fullName: string
@@ -75,7 +703,9 @@ interface CvProfile {
 }
 
 const profile = ref<CvProfile>({
-    personalInfo: { fullName: '', email: '', phone: '', address: '', linkedIn: '', github: '', website: '' },
+    personalInfo: {
+        fullName: '', email: '', phone: '', address: '', linkedIn: '', github: '', website: '', 
+    },
     summary: '',
     workExperiences: [],
     educations: [],
@@ -88,23 +718,24 @@ const profile = ref<CvProfile>({
 const profileId = ref<string | null>(null)
 const saving = ref(false)
 const saveMessage = ref('')
+const saveFailed = ref(false)
 const loadError = ref('')
 
-// Section toggles
-const showAddWork = ref(false)
-const showAddEducation = ref(false)
-const showAddSkill = ref(false)
-const showAddLanguage = ref(false)
-const showAddCert = ref(false)
-const showAddProject = ref(false)
-
 // Add forms
-const newWork = ref<WorkExperience>({ company: '', title: '', startDate: '', endDate: '', current: false, description: '' })
-const newEducation = ref<Education>({ institution: '', degree: '', field: '', startDate: '', endDate: '', description: '' })
+const newWork = ref<WorkExperience>({
+    company: '', title: '', startDate: '', endDate: '', current: false, description: '', 
+})
+const newEducation = ref<Education>({
+    institution: '', degree: '', field: '', startDate: '', endDate: '', description: '', 
+})
 const newSkill = ref<Skill>({ name: '', level: '' })
 const newLanguage = ref<Language>({ name: '', level: '' })
-const newCert = ref<Certification>({ name: '', issuer: '', issueDate: '', expiryDate: '', url: '' })
-const newProject = ref<Project>({ name: '', description: '', url: '', startDate: '', endDate: '' })
+const newCert = ref<Certification>({
+    name: '', issuer: '', issueDate: '', expiryDate: '', url: '', 
+})
+const newProject = ref<Project>({
+    name: '', description: '', url: '', startDate: '', endDate: '', 
+})
 
 onMounted(async () => {
     try {
@@ -120,6 +751,7 @@ onMounted(async () => {
 async function saveProfile() {
     saving.value = true
     saveMessage.value = ''
+    saveFailed.value = false
     try {
         const method = profileId.value ? 'PATCH' : 'POST'
         const path = profileId.value ? `/cv/profile/${profileId.value}` : '/cv/profile'
@@ -131,6 +763,7 @@ async function saveProfile() {
         saveMessage.value = 'Saved!'
     } catch {
         saveMessage.value = 'Save failed'
+        saveFailed.value = true
     } finally {
         saving.value = false
     }
@@ -139,8 +772,9 @@ async function saveProfile() {
 async function addWorkExperience() {
     const data = await apiFetch<WorkExperience>('/cv/work-experiences', { method: 'POST', body: newWork.value })
     profile.value.workExperiences.push(data)
-    newWork.value = { company: '', title: '', startDate: '', endDate: '', current: false, description: '' }
-    showAddWork.value = false
+    newWork.value = {
+        company: '', title: '', startDate: '', endDate: '', current: false, description: '', 
+    }
 }
 
 async function deleteWorkExperience(id: string) {
@@ -151,8 +785,9 @@ async function deleteWorkExperience(id: string) {
 async function addEducation() {
     const data = await apiFetch<Education>('/cv/educations', { method: 'POST', body: newEducation.value })
     profile.value.educations.push(data)
-    newEducation.value = { institution: '', degree: '', field: '', startDate: '', endDate: '', description: '' }
-    showAddEducation.value = false
+    newEducation.value = {
+        institution: '', degree: '', field: '', startDate: '', endDate: '', description: '', 
+    }
 }
 
 async function deleteEducation(id: string) {
@@ -164,7 +799,6 @@ async function addSkill() {
     const data = await apiFetch<Skill>('/cv/skills', { method: 'POST', body: newSkill.value })
     profile.value.skills.push(data)
     newSkill.value = { name: '', level: '' }
-    showAddSkill.value = false
 }
 
 async function deleteSkill(id: string) {
@@ -176,7 +810,6 @@ async function addLanguage() {
     const data = await apiFetch<Language>('/cv/languages', { method: 'POST', body: newLanguage.value })
     profile.value.languages.push(data)
     newLanguage.value = { name: '', level: '' }
-    showAddLanguage.value = false
 }
 
 async function deleteLanguage(id: string) {
@@ -187,8 +820,9 @@ async function deleteLanguage(id: string) {
 async function addCertification() {
     const data = await apiFetch<Certification>('/cv/certifications', { method: 'POST', body: newCert.value })
     profile.value.certifications.push(data)
-    newCert.value = { name: '', issuer: '', issueDate: '', expiryDate: '', url: '' }
-    showAddCert.value = false
+    newCert.value = {
+        name: '', issuer: '', issueDate: '', expiryDate: '', url: '', 
+    }
 }
 
 async function deleteCertification(id: string) {
@@ -199,8 +833,9 @@ async function deleteCertification(id: string) {
 async function addProject() {
     const data = await apiFetch<Project>('/cv/projects', { method: 'POST', body: newProject.value })
     profile.value.projects.push(data)
-    newProject.value = { name: '', description: '', url: '', startDate: '', endDate: '' }
-    showAddProject.value = false
+    newProject.value = {
+        name: '', description: '', url: '', startDate: '', endDate: '', 
+    }
 }
 
 async function deleteProject(id: string) {
@@ -208,296 +843,31 @@ async function deleteProject(id: string) {
     profile.value.projects = profile.value.projects.filter((p) => p.id !== id)
 }
 
-async function handleLogout() {
-    logout()
-    await navigateTo('/login')
-}
+const skillLevelOptions = [
+    { label: 'Select level', value: '' },
+    { label: 'Beginner', value: 'beginner' },
+    { label: 'Intermediate', value: 'intermediate' },
+    { label: 'Advanced', value: 'advanced' },
+    { label: 'Expert', value: 'expert' },
+]
+
+const languageLevelOptions = [
+    { label: 'Select level', value: '' },
+    { label: 'A1 – Beginner', value: 'A1' },
+    { label: 'A2 – Elementary', value: 'A2' },
+    { label: 'B1 – Intermediate', value: 'B1' },
+    { label: 'B2 – Upper Intermediate', value: 'B2' },
+    { label: 'C1 – Advanced', value: 'C1' },
+    { label: 'C2 – Proficient', value: 'C2' },
+    { label: 'Native', value: 'native' },
+]
+
+const accordionItems = [
+    { label: 'Work Experience', value: 'work' },
+    { label: 'Education', value: 'education' },
+    { label: 'Skills', value: 'skills' },
+    { label: 'Languages', value: 'languages' },
+    { label: 'Certifications', value: 'certifications' },
+    { label: 'Projects', value: 'projects' },
+]
 </script>
-
-<template>
-    <div class="page">
-        <header class="page-header">
-            <h1>CV Editor</h1>
-            <nav>
-                <NuxtLink to="/preferences">Preferences</NuxtLink>
-                <NuxtLink to="/sources">Sources</NuxtLink>
-                <NuxtLink to="/applications">Applications</NuxtLink>
-                <button class="btn-link" @click="handleLogout">Logout</button>
-            </nav>
-        </header>
-
-        <p v-if="loadError" class="error">{{ loadError }}</p>
-
-        <section class="card">
-            <h2>Personal Information</h2>
-            <div class="grid-2">
-                <div class="field">
-                    <label>Full Name</label>
-                    <input v-model="profile.personalInfo.fullName" type="text" />
-                </div>
-                <div class="field">
-                    <label>Email</label>
-                    <input v-model="profile.personalInfo.email" type="email" />
-                </div>
-                <div class="field">
-                    <label>Phone</label>
-                    <input v-model="profile.personalInfo.phone" type="tel" />
-                </div>
-                <div class="field">
-                    <label>Address</label>
-                    <input v-model="profile.personalInfo.address" type="text" />
-                </div>
-                <div class="field">
-                    <label>LinkedIn</label>
-                    <input v-model="profile.personalInfo.linkedIn" type="url" />
-                </div>
-                <div class="field">
-                    <label>GitHub</label>
-                    <input v-model="profile.personalInfo.github" type="url" />
-                </div>
-                <div class="field">
-                    <label>Website</label>
-                    <input v-model="profile.personalInfo.website" type="url" />
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Summary</h2>
-            <div class="field">
-                <textarea v-model="profile.summary" rows="5" placeholder="Professional summary..." />
-            </div>
-        </section>
-
-        <div class="save-bar">
-            <button class="btn-primary" :disabled="saving" @click="saveProfile">
-                {{ saving ? 'Saving...' : 'Save Profile' }}
-            </button>
-            <span v-if="saveMessage" :class="saveMessage === 'Saved!' ? 'success' : 'error'">{{ saveMessage }}</span>
-        </div>
-
-        <!-- Work Experience -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Work Experience</h2>
-                <button class="btn-secondary" @click="showAddWork = !showAddWork">
-                    {{ showAddWork ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddWork" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Company</label><input v-model="newWork.company" type="text" /></div>
-                    <div class="field"><label>Title</label><input v-model="newWork.title" type="text" /></div>
-                    <div class="field"><label>Start Date</label><input v-model="newWork.startDate" type="date" /></div>
-                    <div class="field"><label>End Date</label><input v-model="newWork.endDate" type="date" :disabled="newWork.current" /></div>
-                </div>
-                <div class="field">
-                    <label><input v-model="newWork.current" type="checkbox" /> Currently working here</label>
-                </div>
-                <div class="field"><label>Description</label><textarea v-model="newWork.description" rows="3" /></div>
-                <button class="btn-primary" @click="addWorkExperience">Add</button>
-            </div>
-            <ul class="item-list">
-                <li v-for="w in profile.workExperiences" :key="w.id" class="item">
-                    <div>
-                        <strong>{{ w.title }}</strong> at {{ w.company }}
-                        <span class="meta">{{ w.startDate }} – {{ w.current ? 'Present' : w.endDate }}</span>
-                        <p class="desc">{{ w.description }}</p>
-                    </div>
-                    <button class="btn-danger" @click="deleteWorkExperience(w.id!)">Delete</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Education -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Education</h2>
-                <button class="btn-secondary" @click="showAddEducation = !showAddEducation">
-                    {{ showAddEducation ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddEducation" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Institution</label><input v-model="newEducation.institution" type="text" /></div>
-                    <div class="field"><label>Degree</label><input v-model="newEducation.degree" type="text" /></div>
-                    <div class="field"><label>Field of Study</label><input v-model="newEducation.field" type="text" /></div>
-                    <div class="field"><label>Start Date</label><input v-model="newEducation.startDate" type="date" /></div>
-                    <div class="field"><label>End Date</label><input v-model="newEducation.endDate" type="date" /></div>
-                </div>
-                <div class="field"><label>Description</label><textarea v-model="newEducation.description" rows="3" /></div>
-                <button class="btn-primary" @click="addEducation">Add</button>
-            </div>
-            <ul class="item-list">
-                <li v-for="e in profile.educations" :key="e.id" class="item">
-                    <div>
-                        <strong>{{ e.degree }}</strong> in {{ e.field }}, {{ e.institution }}
-                        <span class="meta">{{ e.startDate }} – {{ e.endDate }}</span>
-                    </div>
-                    <button class="btn-danger" @click="deleteEducation(e.id!)">Delete</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Skills -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Skills</h2>
-                <button class="btn-secondary" @click="showAddSkill = !showAddSkill">
-                    {{ showAddSkill ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddSkill" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Skill</label><input v-model="newSkill.name" type="text" /></div>
-                    <div class="field">
-                        <label>Level</label>
-                        <select v-model="newSkill.level">
-                            <option value="">Select level</option>
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate">Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                            <option value="expert">Expert</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn-primary" @click="addSkill">Add</button>
-            </div>
-            <ul class="tag-list">
-                <li v-for="s in profile.skills" :key="s.id" class="tag">
-                    {{ s.name }} <em>({{ s.level }})</em>
-                    <button class="btn-inline-danger" @click="deleteSkill(s.id!)">×</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Languages -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Languages</h2>
-                <button class="btn-secondary" @click="showAddLanguage = !showAddLanguage">
-                    {{ showAddLanguage ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddLanguage" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Language</label><input v-model="newLanguage.name" type="text" /></div>
-                    <div class="field">
-                        <label>Level</label>
-                        <select v-model="newLanguage.level">
-                            <option value="">Select level</option>
-                            <option value="A1">A1 – Beginner</option>
-                            <option value="A2">A2 – Elementary</option>
-                            <option value="B1">B1 – Intermediate</option>
-                            <option value="B2">B2 – Upper Intermediate</option>
-                            <option value="C1">C1 – Advanced</option>
-                            <option value="C2">C2 – Proficient</option>
-                            <option value="native">Native</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn-primary" @click="addLanguage">Add</button>
-            </div>
-            <ul class="tag-list">
-                <li v-for="l in profile.languages" :key="l.id" class="tag">
-                    {{ l.name }} <em>({{ l.level }})</em>
-                    <button class="btn-inline-danger" @click="deleteLanguage(l.id!)">×</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Certifications -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Certifications</h2>
-                <button class="btn-secondary" @click="showAddCert = !showAddCert">
-                    {{ showAddCert ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddCert" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Name</label><input v-model="newCert.name" type="text" /></div>
-                    <div class="field"><label>Issuer</label><input v-model="newCert.issuer" type="text" /></div>
-                    <div class="field"><label>Issue Date</label><input v-model="newCert.issueDate" type="date" /></div>
-                    <div class="field"><label>Expiry Date</label><input v-model="newCert.expiryDate" type="date" /></div>
-                    <div class="field"><label>URL</label><input v-model="newCert.url" type="url" /></div>
-                </div>
-                <button class="btn-primary" @click="addCertification">Add</button>
-            </div>
-            <ul class="item-list">
-                <li v-for="c in profile.certifications" :key="c.id" class="item">
-                    <div>
-                        <strong>{{ c.name }}</strong> — {{ c.issuer }}
-                        <span class="meta">{{ c.issueDate }}<span v-if="c.expiryDate"> – {{ c.expiryDate }}</span></span>
-                        <a v-if="c.url" :href="c.url" target="_blank" class="link">View</a>
-                    </div>
-                    <button class="btn-danger" @click="deleteCertification(c.id!)">Delete</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Projects -->
-        <section class="card">
-            <div class="section-header">
-                <h2>Projects</h2>
-                <button class="btn-secondary" @click="showAddProject = !showAddProject">
-                    {{ showAddProject ? 'Cancel' : '+ Add' }}
-                </button>
-            </div>
-            <div v-if="showAddProject" class="add-form">
-                <div class="grid-2">
-                    <div class="field"><label>Name</label><input v-model="newProject.name" type="text" /></div>
-                    <div class="field"><label>URL</label><input v-model="newProject.url" type="url" /></div>
-                    <div class="field"><label>Start Date</label><input v-model="newProject.startDate" type="date" /></div>
-                    <div class="field"><label>End Date</label><input v-model="newProject.endDate" type="date" /></div>
-                </div>
-                <div class="field"><label>Description</label><textarea v-model="newProject.description" rows="3" /></div>
-                <button class="btn-primary" @click="addProject">Add</button>
-            </div>
-            <ul class="item-list">
-                <li v-for="p in profile.projects" :key="p.id" class="item">
-                    <div>
-                        <strong>{{ p.name }}</strong>
-                        <span class="meta">{{ p.startDate }}<span v-if="p.endDate"> – {{ p.endDate }}</span></span>
-                        <a v-if="p.url" :href="p.url" target="_blank" class="link">View</a>
-                        <p class="desc">{{ p.description }}</p>
-                    </div>
-                    <button class="btn-danger" @click="deleteProject(p.id!)">Delete</button>
-                </li>
-            </ul>
-        </section>
-    </div>
-</template>
-
-<style scoped>
-.page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-.page-header nav { display: flex; gap: 1rem; align-items: center; }
-.page-header nav a { color: #2563eb; text-decoration: none; }
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.section-header h2 { margin: 0; }
-h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
-label { font-size: 0.875rem; font-weight: 500; color: #374151; }
-input, select, textarea { padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; font-family: inherit; }
-textarea { resize: vertical; }
-.add-form { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
-.save-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-.item-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; }
-.item { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.75rem; background: #f9fafb; border-radius: 6px; }
-.meta { display: block; font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
-.desc { font-size: 0.875rem; color: #374151; margin-top: 0.25rem; }
-.link { font-size: 0.75rem; color: #2563eb; margin-left: 0.5rem; }
-.tag-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.tag { display: flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 999px; font-size: 0.875rem; }
-.btn-primary { padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-secondary { padding: 0.375rem 0.75rem; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-.btn-danger { padding: 0.25rem 0.5rem; background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
-.btn-inline-danger { background: none; border: none; color: #dc2626; cursor: pointer; font-size: 1rem; padding: 0 0.125rem; }
-.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; font-size: 1rem; padding: 0; }
-.success { color: #16a34a; font-size: 0.875rem; }
-.error { color: #dc2626; font-size: 0.875rem; }
-</style>

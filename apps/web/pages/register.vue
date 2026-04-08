@@ -1,5 +1,81 @@
+<template>
+    <div
+        class="border rounded-2xl p-8"
+        style="background-color: var(--color-card); border-color: var(--color-border)"
+    >
+        <div class="mb-8">
+            <p class="text-xs font-semibold uppercase tracking-widest mb-1"
+                style="color: var(--color-text-faint)">
+                YOUR SEARCH
+            </p>
+
+            <h1
+                class="text-3xl italic font-semibold"
+                style="font-family: var(--font-display); color: var(--color-text-default)"
+            >
+                Create Account
+            </h1>
+        </div>
+
+        <UForm :state="{ email, password }"
+            @submit="handleSubmit">
+            <UFormField label="Email"
+                name="email"
+                class="mb-4">
+                <UInput
+                    v-model="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                    required
+                    class="w-full"
+                />
+            </UFormField>
+
+            <UFormField label="Password"
+                name="password"
+                class="mb-6">
+                <UInput
+                    v-model="password"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                    required
+                    class="w-full"
+                />
+            </UFormField>
+
+            <p v-if="error"
+                class="text-sm mb-4"
+                style="color: var(--color-error)">
+                {{ error }}
+            </p>
+
+            <UButton
+                type="submit"
+                color="primary"
+                variant="solid"
+                class="w-full justify-center"
+                :loading="loading"
+            >
+                Create Account
+            </UButton>
+        </UForm>
+
+        <p class="text-sm mt-6 text-center"
+            style="color: var(--color-text-muted)">
+            Already have an account?
+            <NuxtLink to="/login"
+                class="font-medium"
+                style="color: var(--color-accent)">
+                Sign In
+            </NuxtLink>
+        </p>
+    </div>
+</template>
+
 <script setup lang="ts">
-definePageMeta({ middleware: [] })
+definePageMeta({ layout: 'auth', middleware: [] })
 
 const { register } = useAuth()
 const email = ref('')
@@ -23,33 +99,3 @@ async function handleSubmit() {
     }
 }
 </script>
-
-<template>
-    <div class="auth-container">
-        <h1>Create Account</h1>
-        <form @submit.prevent="handleSubmit">
-            <div class="field">
-                <label>Email</label>
-                <input v-model="email" type="email" required autocomplete="email" />
-            </div>
-            <div class="field">
-                <label>Password</label>
-                <input v-model="password" type="password" required autocomplete="new-password" />
-            </div>
-            <p v-if="error" class="error">{{ error }}</p>
-            <button type="submit" :disabled="loading">
-                {{ loading ? 'Creating account...' : 'Create Account' }}
-            </button>
-        </form>
-        <p><NuxtLink to="/login">Already have an account? Sign In</NuxtLink></p>
-    </div>
-</template>
-
-<style scoped>
-.auth-container { max-width: 400px; margin: 80px auto; padding: 2rem; }
-.field { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
-input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-button { width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-button:disabled { opacity: 0.6; cursor: not-allowed; }
-.error { color: #dc2626; font-size: 0.875rem; }
-</style>

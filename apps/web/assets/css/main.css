@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+    /* Background */
+    --color-background: #f5f1eb;
+    --color-card: #faf8f4;
+
+    /* Borders */
+    --color-border: #e2dbd0;
+    --color-border-strong: #c8c0b4;
+
+    /* Text */
+    --color-text-default: #1c1917;
+    --color-text-muted: #6b6359;
+    --color-text-faint: #a09589;
+
+    /* Accent — burgundy */
+    --color-accent: #9f1239;
+    --color-accent-tint: #ffe4e6;
+
+    /* Success — forest green */
+    --color-success: #166534;
+    --color-success-tint: #dcfce7;
+
+    /* Error — terracotta */
+    --color-error: #c2410c;
+    --color-error-tint: #ffedd5;
+
+    /* Warning */
+    --color-warning: #b45309;
+    --color-warning-tint: #fef3c7;
+
+    /* Typography */
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-sans: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
+html {
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-text-default);
+}
+
+body {
+    font-family: var(--font-sans);
+}
+
+/* Dot grid background texture */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, #c8c0b4 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+}

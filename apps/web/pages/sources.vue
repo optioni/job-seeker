@@ -1,6 +1,212 @@
+<template>
+    <div>
+        <h1
+            class="text-3xl font-semibold italic mb-6"
+            style="font-family: var(--font-display); color: var(--color-text-default)"
+        >
+            Job Sources
+        </h1>
+
+        <p v-if="loadError"
+            class="text-sm mb-4"
+            style="color: var(--color-error)">
+            {{ loadError }}
+        </p>
+
+        <!-- Available Presets -->
+        <div
+            class="border rounded-xl p-6 mb-6"
+            style="background-color: var(--color-card); border-color: var(--color-border)"
+        >
+            <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
+                style="color: var(--color-text-faint)">
+                Available Job Boards
+            </h2>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div
+                    v-for="preset in presets"
+                    :key="preset.id"
+                    class="border rounded-xl p-4 flex flex-col justify-between gap-3"
+                    style="background-color: var(--color-background); border-color: var(--color-border)"
+                >
+                    <div>
+                        <p class="font-semibold text-sm mb-1"
+                            style="color: var(--color-text-default)">
+                            {{ preset.name }}
+                        </p>
+
+                        <p class="text-xs mb-2"
+                            style="color: var(--color-text-faint)">
+                            {{ preset.baseUrl }}
+                        </p>
+
+                        <UBadge color="neutral"
+                            variant="soft"
+                            size="xs">
+                            {{ preset.defaultLanguage.toUpperCase() }}
+                        </UBadge>
+                    </div>
+
+                    <UButton
+                        color="neutral"
+                        variant="outline"
+                        size="sm"
+                        @click="openAddModal(preset)"
+                    >
+                        Add Source
+                    </UButton>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Sources -->
+        <div
+            class="border rounded-xl p-6"
+            style="background-color: var(--color-card); border-color: var(--color-border)"
+        >
+            <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
+                style="color: var(--color-text-faint)">
+                My Sources
+            </h2>
+
+            <p
+                v-if="sources.length === 0"
+                class="text-sm"
+                style="color: var(--color-text-faint)"
+            >
+                No sources configured yet. Add one from the list above.
+            </p>
+
+            <div v-else
+                class="flex flex-col gap-3">
+                <div
+                    v-for="source in sources"
+                    :key="source.id"
+                    class="flex items-center justify-between border rounded-xl px-4 py-3"
+                    style="background-color: var(--color-background); border-color: var(--color-border)"
+                >
+                    <div>
+                        <p class="font-semibold text-sm"
+                            style="color: var(--color-text-default)">
+                            {{ source.presetName }}
+                        </p>
+
+                        <p class="text-xs mt-0.5"
+                            style="color: var(--color-text-faint)">
+                            Every {{ source.pollingInterval }} min · {{ source.language.toUpperCase() }}
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <UBadge :color="source.active ? 'success' : 'error'"
+                            variant="soft"
+                            size="sm">
+                            {{ source.active ? 'Active' : 'Paused' }}
+                        </UBadge>
+
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            size="xs"
+                            @click="toggleActive(source)"
+                        >
+                            {{ source.active ? 'Pause' : 'Activate' }}
+                        </UButton>
+
+                        <UButton
+                            color="error"
+                            variant="soft"
+                            size="xs"
+                            @click="deleteSource(source.id)"
+                        >
+                            Delete
+                        </UButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Source Modal -->
+        <UModal
+            v-model:open="showAddModal"
+            :title="`Add Source: ${selectedPreset?.name ?? ''}`"
+        >
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Language"
+                        name="language">
+                        <USelect
+                            v-model="addForm.language"
+                            :items="languageOptions"
+                            value-key="value"
+                            label-key="label"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Polling Interval (minutes)"
+                        name="pollingInterval">
+                        <UInput
+                            v-model.number="addForm.pollingInterval"
+                            type="number"
+                            :min="5"
+                            :max="1440"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <template v-if="selectedPreset?.filterConfig?.length">
+                        <p class="text-xs font-semibold uppercase tracking-widest"
+                            style="color: var(--color-text-faint)">
+                            Filters
+                        </p>
+
+                        <UFormField
+                            v-for="field in selectedPreset.filterConfig"
+                            :key="field.key"
+                            :label="field.label"
+                            :name="field.key"
+                            :required="field.required"
+                        >
+                            <UInput
+                                v-model="addForm.filters[field.key]"
+                                :type="field.type === 'number' ? 'number' : 'text'"
+                                class="w-full"
+                            />
+                        </UFormField>
+                    </template>
+
+                    <p v-if="addError"
+                        class="text-sm"
+                        style="color: var(--color-error)">
+                        {{ addError }}
+                    </p>
+                </div>
+            </template>
+
+            <template #footer>
+                <UButton color="neutral"
+                    variant="ghost"
+                    @click="showAddModal = false">
+                    Cancel
+                </UButton>
+
+                <UButton color="primary"
+                    variant="solid"
+                    :loading="adding"
+                    @click="addSource">
+                    Add Source
+                </UButton>
+            </template>
+        </UModal>
+    </div>
+</template>
+
 <script setup lang="ts">
+definePageMeta({ layout: 'default' })
+
 const { apiFetch } = useApi()
-const { logout } = useAuth()
 
 interface FilterConfigField {
     key: string
@@ -67,11 +273,6 @@ function openAddModal(preset: JobSourcePreset) {
     showAddModal.value = true
 }
 
-function closeModal() {
-    showAddModal.value = false
-    selectedPreset.value = null
-}
-
 async function addSource() {
     if (!selectedPreset.value) return
     adding.value = true
@@ -87,7 +288,8 @@ async function addSource() {
             },
         })
         sources.value.push(data)
-        closeModal()
+        showAddModal.value = false
+        selectedPreset.value = null
     } catch {
         addError.value = 'Failed to add source'
     } finally {
@@ -104,7 +306,7 @@ async function toggleActive(source: JobSource) {
         const index = sources.value.findIndex((s) => s.id === source.id)
         if (index !== -1) sources.value[index] = data
     } catch {
-        // revert optimistic update not needed since we didn't mutate yet
+        // ignore
     }
 }
 
@@ -117,136 +319,9 @@ async function deleteSource(id: string) {
     }
 }
 
-async function handleLogout() {
-    logout()
-    await navigateTo('/login')
-}
+const languageOptions = [
+    { label: 'Finnish', value: 'fi' },
+    { label: 'English', value: 'en' },
+    { label: 'Swedish', value: 'sv' },
+]
 </script>
-
-<template>
-    <div class="page">
-        <header class="page-header">
-            <h1>Job Sources</h1>
-            <nav>
-                <NuxtLink to="/cv">CV</NuxtLink>
-                <NuxtLink to="/preferences">Preferences</NuxtLink>
-                <NuxtLink to="/applications">Applications</NuxtLink>
-                <button class="btn-link" @click="handleLogout">Logout</button>
-            </nav>
-        </header>
-
-        <p v-if="loadError" class="error">{{ loadError }}</p>
-
-        <!-- Available Presets -->
-        <section class="card">
-            <h2>Available Job Boards</h2>
-            <ul class="preset-list">
-                <li v-for="preset in presets" :key="preset.id" class="preset-item">
-                    <div>
-                        <strong>{{ preset.name }}</strong>
-                        <span class="meta">{{ preset.baseUrl }}</span>
-                        <span class="badge">{{ preset.defaultLanguage.toUpperCase() }}</span>
-                    </div>
-                    <button class="btn-secondary" @click="openAddModal(preset)">Add Source</button>
-                </li>
-            </ul>
-        </section>
-
-        <!-- My Sources -->
-        <section class="card">
-            <h2>My Sources</h2>
-            <p v-if="sources.length === 0" class="empty">No sources configured yet. Add one from the list above.</p>
-            <ul v-else class="item-list">
-                <li v-for="source in sources" :key="source.id" class="item">
-                    <div>
-                        <strong>{{ source.presetName }}</strong>
-                        <span class="meta">Every {{ source.pollingInterval }} min · {{ source.language.toUpperCase() }}</span>
-                        <span :class="['status', source.active ? 'active' : 'inactive']">
-                            {{ source.active ? 'Active' : 'Paused' }}
-                        </span>
-                    </div>
-                    <div class="actions">
-                        <button class="btn-secondary" @click="toggleActive(source)">
-                            {{ source.active ? 'Pause' : 'Activate' }}
-                        </button>
-                        <button class="btn-danger" @click="deleteSource(source.id)">Delete</button>
-                    </div>
-                </li>
-            </ul>
-        </section>
-
-        <!-- Add Source Modal -->
-        <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Add Source: {{ selectedPreset?.name }}</h3>
-                    <button class="btn-close" @click="closeModal">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="field">
-                        <label>Language</label>
-                        <select v-model="addForm.language">
-                            <option value="fi">Finnish</option>
-                            <option value="en">English</option>
-                            <option value="sv">Swedish</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Polling Interval (minutes)</label>
-                        <input v-model.number="addForm.pollingInterval" type="number" min="5" max="1440" />
-                    </div>
-                    <template v-if="selectedPreset?.filterConfig?.length">
-                        <h4>Filters</h4>
-                        <div v-for="field in selectedPreset.filterConfig" :key="field.key" class="field">
-                            <label>{{ field.label }}<span v-if="field.required" class="required">*</span></label>
-                            <input v-model="addForm.filters[field.key]" :type="field.type === 'number' ? 'number' : 'text'" />
-                        </div>
-                    </template>
-                    <p v-if="addError" class="error">{{ addError }}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" @click="closeModal">Cancel</button>
-                    <button class="btn-primary" :disabled="adding" @click="addSource">
-                        {{ adding ? 'Adding...' : 'Add Source' }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
-<style scoped>
-.page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-.page-header nav { display: flex; gap: 1rem; align-items: center; }
-.page-header nav a { color: #2563eb; text-decoration: none; }
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
-h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; }
-h4 { font-size: 0.875rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.preset-list, .item-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; }
-.preset-item, .item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 6px; }
-.meta { display: block; font-size: 0.75rem; color: #6b7280; margin-top: 0.125rem; }
-.badge { display: inline-block; padding: 0.125rem 0.375rem; background: #eff6ff; color: #1d4ed8; border-radius: 999px; font-size: 0.75rem; margin-left: 0.5rem; }
-.status { display: inline-block; padding: 0.125rem 0.375rem; border-radius: 999px; font-size: 0.75rem; margin-left: 0.5rem; }
-.status.active { background: #dcfce7; color: #16a34a; }
-.status.inactive { background: #fee2e2; color: #dc2626; }
-.actions { display: flex; gap: 0.5rem; }
-.empty { color: #6b7280; font-size: 0.875rem; }
-.field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
-label { font-size: 0.875rem; font-weight: 500; color: #374151; }
-input, select { padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; }
-.required { color: #dc2626; margin-left: 0.125rem; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.modal { background: white; border-radius: 8px; width: 480px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.modal-header h3 { margin: 0; font-size: 1rem; font-weight: 600; }
-.modal-body { padding: 1.5rem; overflow-y: auto; }
-.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.5rem; }
-.btn-close { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6b7280; }
-.btn-primary { padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-secondary { padding: 0.375rem 0.75rem; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-.btn-danger { padding: 0.375rem 0.75rem; background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-.btn-link { background: none; border: none; color: #2563eb; cursor: pointer; font-size: 1rem; padding: 0; }
-.error { color: #dc2626; font-size: 0.875rem; }
-</style>
