@@ -1,4 +1,6 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { type Rel } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
+
 import { CvProfile } from './cv-profile.entity';
 
 @Entity({ tableName: 'work_experiences' })
@@ -7,7 +9,7 @@ export class WorkExperience {
     id: string = crypto.randomUUID();
 
     @ManyToOne(() => CvProfile)
-    cvProfile!: CvProfile;
+    cvProfile!: Rel<CvProfile>;
 
     @Property()
     company!: string;
@@ -21,7 +23,7 @@ export class WorkExperience {
     @Property({ nullable: true })
     endDate?: string;
 
-    @Property({ nullable: true })
+    @Property({ type: 'boolean', nullable: true })
     current?: boolean;
 
     @Property({ columnType: 'text' })

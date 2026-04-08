@@ -1,7 +1,11 @@
-import { Collection, Entity, ManyToOne, OneToMany, PrimaryKey, Property } from '@mikro-orm/core';
-import { User } from './user.entity';
-import { JobSourcePreset } from './job-source-preset.entity';
+import { Collection, type Rel } from '@mikro-orm/core';
+import {
+    Entity, ManyToOne, OneToMany, PrimaryKey, Property,
+} from '@mikro-orm/decorators/legacy';
+
 import { JobListing } from './job-listing.entity';
+import { JobSourcePreset } from './job-source-preset.entity';
+import { User } from './user.entity';
 
 @Entity({ tableName: 'job_sources' })
 export class JobSource {
@@ -9,10 +13,10 @@ export class JobSource {
     id: string = crypto.randomUUID();
 
     @ManyToOne(() => User)
-    user!: User;
+    user!: Rel<User>;
 
     @ManyToOne(() => JobSourcePreset)
-    preset!: JobSourcePreset;
+    preset!: Rel<JobSourcePreset>;
 
     @Property()
     label!: string;
@@ -26,7 +30,7 @@ export class JobSource {
     @Property({ columnType: 'int' })
     pollingInterval!: number;
 
-    @Property({ default: true })
+    @Property({ type: 'boolean', default: true })
     active: boolean = true;
 
     @Property()

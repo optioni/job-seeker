@@ -1,21 +1,25 @@
-import { Collection, Entity, ManyToOne, OneToMany, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, type Rel } from '@mikro-orm/core';
+import {
+    Entity, ManyToOne, OneToMany, PrimaryKey, Property,
+} from '@mikro-orm/decorators/legacy';
+
+import { Certification } from './certification.entity';
+import { Education } from './education.entity';
+import { Language } from './language.entity';
+import { Project } from './project.entity';
+import { Skill } from './skill.entity';
 import { User } from './user.entity';
 import { WorkExperience } from './work-experience.entity';
-import { Education } from './education.entity';
-import { Skill } from './skill.entity';
-import { Language } from './language.entity';
-import { Certification } from './certification.entity';
-import { Project } from './project.entity';
 
 export interface PersonalInfo {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    location?: string;
-    linkedIn?: string;
-    github?: string;
-    website?: string;
+    firstName: string
+    lastName: string
+    email: string
+    phone?: string
+    location?: string
+    linkedIn?: string
+    github?: string
+    website?: string
 }
 
 @Entity({ tableName: 'cv_profiles' })
@@ -24,10 +28,10 @@ export class CvProfile {
     id: string = crypto.randomUUID();
 
     @ManyToOne(() => User)
-    user!: User;
+    user!: Rel<User>;
 
     @Property({ type: 'json', nullable: true })
-    personalInfo?: PersonalInfo;
+    personalInfo?: Rel<PersonalInfo>;
 
     @Property({ columnType: 'text', nullable: true })
     summary?: string;

@@ -1,6 +1,10 @@
-import { Entity, ManyToOne, OneToOne, PrimaryKey, Property, Unique } from '@mikro-orm/core';
-import { JobSource } from './job-source.entity';
+import { type Rel } from '@mikro-orm/core';
+import {
+    Entity, ManyToOne, OneToOne, PrimaryKey, Property, Unique,
+} from '@mikro-orm/decorators/legacy';
+
 import { JobApplication } from './job-application.entity';
+import { JobSource } from './job-source.entity';
 
 @Entity({ tableName: 'job_listings' })
 @Unique({ properties: ['source', 'externalId'] })
@@ -9,7 +13,7 @@ export class JobListing {
     id: string = crypto.randomUUID();
 
     @ManyToOne(() => JobSource)
-    source!: JobSource;
+    source!: Rel<JobSource>;
 
     @Property()
     externalId!: string;
@@ -33,5 +37,5 @@ export class JobListing {
     publishedAt?: Date;
 
     @OneToOne(() => JobApplication, (application) => application.listing, { nullable: true })
-    application?: JobApplication;
+    application?: Rel<JobApplication>;
 }

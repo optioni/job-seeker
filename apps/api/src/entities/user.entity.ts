@@ -1,4 +1,8 @@
-import { Collection, Entity, OneToMany, OneToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, type Rel } from '@mikro-orm/core';
+import {
+    Entity, OneToMany, OneToOne, PrimaryKey, Property,
+} from '@mikro-orm/decorators/legacy';
+
 import { CvProfile } from './cv-profile.entity';
 import { JobPreferences } from './job-preferences.entity';
 import { JobSource } from './job-source.entity';
@@ -21,7 +25,7 @@ export class User {
     cvProfiles = new Collection<CvProfile>(this);
 
     @OneToOne(() => JobPreferences, (jobPreferences) => jobPreferences.user, { nullable: true })
-    jobPreferences?: JobPreferences;
+    jobPreferences?: Rel<JobPreferences>;
 
     @OneToMany(() => JobSource, (jobSource) => jobSource.user)
     jobSources = new Collection<JobSource>(this);

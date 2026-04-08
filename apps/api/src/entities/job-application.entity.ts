@@ -1,4 +1,6 @@
-import { Entity, OneToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { type Rel } from '@mikro-orm/core';
+import { Entity, OneToOne, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
+
 import { JobListing } from './job-listing.entity';
 
 @Entity({ tableName: 'job_applications' })
@@ -7,9 +9,9 @@ export class JobApplication {
     id: string = crypto.randomUUID();
 
     @OneToOne(() => JobListing, (listing) => listing.application, { owner: true })
-    listing!: JobListing;
+    listing!: Rel<JobListing>;
 
-    @Property()
+    @Property({ type: 'boolean' })
     matched!: boolean;
 
     @Property({ nullable: true, columnType: 'int' })

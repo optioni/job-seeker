@@ -1,4 +1,6 @@
-import { Entity, OneToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { type Rel } from '@mikro-orm/core';
+import { Entity, OneToOne, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
+
 import { User } from './user.entity';
 
 @Entity({ tableName: 'job_preferences' })
@@ -7,7 +9,7 @@ export class JobPreferences {
     id: string = crypto.randomUUID();
 
     @OneToOne(() => User, (user) => user.jobPreferences, { owner: true })
-    user!: User;
+    user!: Rel<User>;
 
     @Property({ type: 'json' })
     locations!: string[];
