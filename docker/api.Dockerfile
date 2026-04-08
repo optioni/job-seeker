@@ -1,15 +1,15 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy workspace files
-COPY package.json yarn.lock .yarnrc.yaml ./
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
-RUN corepack enable && yarn install --frozen-lockfile
+RUN corepack enable && yarn install
 
 # Copy source
 COPY packages/shared ./packages/shared
@@ -20,14 +20,14 @@ RUN yarn workspace @job-seeker/shared build 2>/dev/null || true
 RUN yarn workspace @job-seeker/api build
 
 # Stage 2: Production
-FROM node:20-alpine AS production
+FROM node:24-alpine AS production
 WORKDIR /app
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copy workspace config for production install
-COPY package.json yarn.lock .yarnrc.yaml ./
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
