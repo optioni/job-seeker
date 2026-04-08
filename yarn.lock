@@ -1901,6 +1901,7 @@ __metadata:
     "@mikro-orm/migrations": "npm:^7.0.0"
     "@mikro-orm/nestjs": "npm:^7.0.0"
     "@mikro-orm/postgresql": "npm:^7.0.0"
+    "@mikro-orm/seeder": "npm:^7.0.0"
     "@nestjs/axios": "npm:^4.0.0"
     "@nestjs/bull": "npm:^11.0.0"
     "@nestjs/cli": "npm:^11.0.0"
@@ -2221,6 +2222,15 @@ __metadata:
   peerDependencies:
     "@mikro-orm/core": 7.0.9
   checksum: 10c0/82520c4ea3423e36ceab8807a63abc73e2ec6beb7af69371d8ad40811db82c3d31979bd6da000e0d1b794f8a89670fa74f085dafe843e42983f3bcfcb9d02727
+  languageName: node
+  linkType: hard
+
+"@mikro-orm/seeder@npm:^7.0.0":
+  version: 7.0.9
+  resolution: "@mikro-orm/seeder@npm:7.0.9"
+  peerDependencies:
+    "@mikro-orm/core": 7.0.9
+  checksum: 10c0/79c817036385134bc015b5b9a304d6fe32e132272bbe61210269387f32e1be4fe56c49389bbedcbf99defc0b67c2e97aba619cf91e3cb0502a290dbdad36117f
   languageName: node
   linkType: hard
 

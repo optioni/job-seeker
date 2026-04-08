@@ -1,8 +1,8 @@
-import 'reflect-metadata';
-import { MikroORM } from '@mikro-orm/postgresql';
+/* eslint-disable no-console */
+import { type EntityManager } from '@mikro-orm/postgresql';
+import { Seeder } from '@mikro-orm/seeder';
 
-import { JobSourcePreset } from './entities/job-source-preset.entity';
-import config from './mikro-orm.config';
+import { JobSourcePreset } from '../entities/job-source-preset.entity';
 
 const presets = [
     {
@@ -49,33 +49,17 @@ const presets = [
     },
 ];
 
-async function seed(): Promise<void> {
-    const orm = await MikroORM.init(config);
-    const em = orm.em.fork();
-
-    try {
+export class JobSourcePresetSeeder extends Seeder {
+    async run(em: EntityManager): Promise<void> {
         for (const presetData of presets) {
             const existing = await em.findOne(JobSourcePreset, { name: presetData.name });
 
             if (existing) {
                 console.log(`Preset already exists, skipping: ${presetData.name}`);
             } else {
-                const preset = em.create(JobSourcePreset, presetData);
-                em.persist(preset);
+                em.create(JobSourcePreset, presetData);
                 console.log(`Created preset: ${presetData.name}`);
             }
         }
-
-        await em.flush();
-        console.log('Seed completed successfully.');
-    } finally {
-        await orm.close();
     }
 }
-
-seed()
-    .then(() => process.exit(0))
-    .catch((error: unknown) => {
-        console.error('Seed failed:', error);
-        process.exit(1);
-    });

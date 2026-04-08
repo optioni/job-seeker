@@ -1,5 +1,6 @@
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { Migrator } from '@mikro-orm/migrations';
+import { SeedManager } from '@mikro-orm/seeder';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { config } from 'dotenv';
 import { join } from 'path';
@@ -29,5 +30,11 @@ export default defineConfig({
         path: './migrations',
         glob: '!(*.d).{js,ts}',
     },
-    extensions: [Migrator],
+    seeder: {
+        path: './src/seeders',
+        pathTs: './src/seeders',
+        defaultSeeder: 'DatabaseSeeder',
+        glob: '!(*.d).{js,ts}',
+    },
+    extensions: [Migrator, SeedManager],
 });
