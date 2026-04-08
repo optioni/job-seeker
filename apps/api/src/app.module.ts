@@ -58,6 +58,7 @@ import { PreferencesModule } from './preferences/preferences.module';
         DocumentModule,
         NotificationModule,
         ApplicationsModule,
+        DashboardModule,
     ],
     providers: [
         { provide: APP_GUARD, useClass: JwtAuthGuard },
