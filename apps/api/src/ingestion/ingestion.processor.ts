@@ -1,12 +1,11 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
-import { Logger } from '@nestjs/common';
+import { type IngestionJobPayload, type MatchingJobPayload } from '@job-seeker/shared';
 import { EntityManager } from '@mikro-orm/core';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
+import type { Job, Queue } from 'bull';
+
 import { JobListing } from '../entities/job-listing.entity';
 import { JobSource } from '../entities/job-source.entity';
-import type { IngestionJobPayload, MatchingJobPayload } from '@job-seeker/shared';
 
 @Processor('ingestion')
 export class IngestionProcessor {
@@ -35,7 +34,8 @@ export class IngestionProcessor {
             publishedAt: listing.publishedAt ? new Date(listing.publishedAt) : undefined,
         });
 
-        await em.persistAndFlush(jobListing);
+        em.persist(jobListing);
+        await em.flush();
 
         const payload: MatchingJobPayload = { listingId: jobListing.id };
         await this.matchingQueue.add(payload);

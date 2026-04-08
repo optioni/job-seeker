@@ -1,13 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository, EntityManager } from '@mikro-orm/core';
-import { CvProfile } from '../entities/cv-profile.entity';
-import { WorkExperience } from '../entities/work-experience.entity';
-import { Education } from '../entities/education.entity';
-import { Skill } from '../entities/skill.entity';
-import { Language } from '../entities/language.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { Certification } from '../entities/certification.entity';
+import { CvProfile } from '../entities/cv-profile.entity';
+import { Education } from '../entities/education.entity';
+import { Language } from '../entities/language.entity';
 import { Project } from '../entities/project.entity';
+import { Skill } from '../entities/skill.entity';
+import { WorkExperience } from '../entities/work-experience.entity';
 
 @Injectable()
 export class CvService {
@@ -37,8 +38,9 @@ export class CvService {
     }
 
     async createProfile(userId: string, data: Partial<CvProfile>): Promise<CvProfile> {
-        const profile = this.cvProfileRepo.create({ ...data, user: userId } as CvProfile);
-        await this.em.persistAndFlush(profile);
+        const profile = this.cvProfileRepo.create({ ...data, user: userId } as unknown as CvProfile);
+        this.em.persist(profile);
+        await this.em.flush();
         return profile;
     }
 
@@ -50,6 +52,7 @@ export class CvService {
         if (!profile || profile.user.id !== userId) {
             throw new NotFoundException('CV profile not found');
         }
+
         this.cvProfileRepo.assign(profile, data);
         await this.em.flush();
         return profile;
@@ -62,10 +65,15 @@ export class CvService {
         return this.workExperienceRepo.find({ cvProfile: profileId });
     }
 
-    async createWorkExperience(userId: string, profileId: string, data: Partial<WorkExperience>): Promise<WorkExperience> {
+    async createWorkExperience(
+        userId: string,
+        profileId: string,
+        data: Partial<WorkExperience>,
+    ): Promise<WorkExperience> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.workExperienceRepo.create({ ...data, cvProfile: profileId } as WorkExperience);
-        await this.em.persistAndFlush(entity);
+        const entity = this.workExperienceRepo.create({ ...data, cvProfile: profileId } as unknown as WorkExperience);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -74,6 +82,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Work experience not found');
         }
+
         this.workExperienceRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -84,7 +93,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Work experience not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Education
@@ -96,8 +107,9 @@ export class CvService {
 
     async createEducation(userId: string, profileId: string, data: Partial<Education>): Promise<Education> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.educationRepo.create({ ...data, cvProfile: profileId } as Education);
-        await this.em.persistAndFlush(entity);
+        const entity = this.educationRepo.create({ ...data, cvProfile: profileId } as unknown as Education);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -106,6 +118,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Education not found');
         }
+
         this.educationRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -116,7 +129,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Education not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Skill
@@ -128,8 +143,9 @@ export class CvService {
 
     async createSkill(userId: string, profileId: string, data: Partial<Skill>): Promise<Skill> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.skillRepo.create({ ...data, cvProfile: profileId } as Skill);
-        await this.em.persistAndFlush(entity);
+        const entity = this.skillRepo.create({ ...data, cvProfile: profileId } as unknown as Skill);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -138,6 +154,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Skill not found');
         }
+
         this.skillRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -148,7 +165,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Skill not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Language
@@ -160,8 +179,9 @@ export class CvService {
 
     async createLanguage(userId: string, profileId: string, data: Partial<Language>): Promise<Language> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.languageRepo.create({ ...data, cvProfile: profileId } as Language);
-        await this.em.persistAndFlush(entity);
+        const entity = this.languageRepo.create({ ...data, cvProfile: profileId } as unknown as Language);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -170,6 +190,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Language not found');
         }
+
         this.languageRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -180,7 +201,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Language not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Certification
@@ -192,8 +215,9 @@ export class CvService {
 
     async createCertification(userId: string, profileId: string, data: Partial<Certification>): Promise<Certification> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.certificationRepo.create({ ...data, cvProfile: profileId } as Certification);
-        await this.em.persistAndFlush(entity);
+        const entity = this.certificationRepo.create({ ...data, cvProfile: profileId } as unknown as Certification);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -202,6 +226,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Certification not found');
         }
+
         this.certificationRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -212,7 +237,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Certification not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Project
@@ -224,8 +251,9 @@ export class CvService {
 
     async createProject(userId: string, profileId: string, data: Partial<Project>): Promise<Project> {
         await this.requireProfileOwnership(userId, profileId);
-        const entity = this.projectRepo.create({ ...data, cvProfile: profileId } as Project);
-        await this.em.persistAndFlush(entity);
+        const entity = this.projectRepo.create({ ...data, cvProfile: profileId } as unknown as Project);
+        this.em.persist(entity);
+        await this.em.flush();
         return entity;
     }
 
@@ -234,6 +262,7 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Project not found');
         }
+
         this.projectRepo.assign(entity, data);
         await this.em.flush();
         return entity;
@@ -244,7 +273,9 @@ export class CvService {
         if (!entity || entity.cvProfile.user.id !== userId) {
             throw new NotFoundException('Project not found');
         }
-        await this.em.removeAndFlush(entity);
+
+        this.em.remove(entity);
+        await this.em.flush();
     }
 
     // Helpers
@@ -254,6 +285,7 @@ export class CvService {
         if (!profile || profile.user.id !== userId) {
             throw new NotFoundException('CV profile not found');
         }
+
         return profile;
     }
 }

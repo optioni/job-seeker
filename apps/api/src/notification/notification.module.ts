@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { HttpModule } from '@nestjs/axios';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+
 import { JobApplication } from '../entities/job-application.entity';
-import { NotificationProcessor } from './notification.processor';
 import { DigestCron } from './digest.cron';
+import { NotificationProcessor } from './notification.processor';
 
 @Module({
     imports: [

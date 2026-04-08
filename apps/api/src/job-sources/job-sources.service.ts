@@ -1,24 +1,25 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository, EntityManager } from '@mikro-orm/core';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+
 import { JobSourcePreset } from '../entities/job-source-preset.entity';
 import { JobSource } from '../entities/job-source.entity';
 
 export interface CreateJobSourceDto {
-    presetId: string;
-    label: string;
-    filters: Record<string, string>;
-    language?: 'fi' | 'en';
-    pollingInterval: number;
-    active?: boolean;
+    presetId: string
+    label: string
+    filters: Record<string, string>
+    language?: 'fi' | 'en'
+    pollingInterval: number
+    active?: boolean
 }
 
 export interface UpdateJobSourceDto {
-    label?: string;
-    filters?: Record<string, string>;
-    language?: 'fi' | 'en';
-    pollingInterval?: number;
-    active?: boolean;
+    label?: string
+    filters?: Record<string, string>
+    language?: 'fi' | 'en'
+    pollingInterval?: number
+    active?: boolean
 }
 
 @Injectable()
@@ -40,6 +41,7 @@ export class JobSourcesService {
         if (!preset) {
             throw new NotFoundException('Job source preset not found');
         }
+
         return preset;
     }
 
@@ -52,6 +54,7 @@ export class JobSourcesService {
         if (!preset) {
             throw new NotFoundException('Job source preset not found');
         }
+
         this.validateFilterKeys(preset, data.filters);
         const source = this.sourceRepo.create({
             user: userId,
@@ -62,7 +65,8 @@ export class JobSourcesService {
             pollingInterval: data.pollingInterval,
             active: data.active ?? true,
         } as unknown as JobSource);
-        await this.em.persistAndFlush(source);
+        this.em.persist(source);
+        await this.em.flush();
         return source;
     }
 
@@ -71,9 +75,11 @@ export class JobSourcesService {
         if (!source || source.user.id !== userId) {
             throw new NotFoundException('Job source not found');
         }
+
         if (data.filters !== undefined) {
             this.validateFilterKeys(source.preset, data.filters);
         }
+
         this.sourceRepo.assign(source, data);
         await this.em.flush();
         return source;
@@ -84,12 +90,14 @@ export class JobSourcesService {
         if (!source || source.user.id !== userId) {
             throw new NotFoundException('Job source not found');
         }
-        await this.em.removeAndFlush(source);
+
+        this.em.remove(source);
+        await this.em.flush();
     }
 
     private validateFilterKeys(preset: JobSourcePreset, filters: Record<string, string>): void {
         const validKeys = Object.keys(preset.filterConfig);
-        const invalidKeys = Object.keys(filters).filter((k) => !validKeys.includes(k));
+        const invalidKeys = Object.keys(filters).filter((key) => !validKeys.includes(key));
         if (invalidKeys.length > 0) {
             throw new UnprocessableEntityException(`Invalid filter keys: ${invalidKeys.join(', ')}`);
         }

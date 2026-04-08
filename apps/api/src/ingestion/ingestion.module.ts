@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+
 import { JobListing } from '../entities/job-listing.entity';
-import { JobSource } from '../entities/job-source.entity';
 import { JobSourcePreset } from '../entities/job-source-preset.entity';
-import { RssAdapter } from './rss.adapter';
+import { JobSource } from '../entities/job-source.entity';
 import { IngestionCron } from './ingestion.cron';
 import { IngestionProcessor } from './ingestion.processor';
+import { RssAdapter } from './rss.adapter';
 
 @Module({
     imports: [

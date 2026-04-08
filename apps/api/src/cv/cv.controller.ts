@@ -9,15 +9,16 @@ import {
     Patch,
     Post,
 } from '@nestjs/common';
-import { CvService } from './cv.service';
+
 import { CurrentUser } from '../auth/current-user.decorator';
-import { CvProfile } from '../entities/cv-profile.entity';
-import { WorkExperience } from '../entities/work-experience.entity';
-import { Education } from '../entities/education.entity';
-import { Skill } from '../entities/skill.entity';
-import { Language } from '../entities/language.entity';
 import { Certification } from '../entities/certification.entity';
+import { CvProfile } from '../entities/cv-profile.entity';
+import { Education } from '../entities/education.entity';
+import { Language } from '../entities/language.entity';
 import { Project } from '../entities/project.entity';
+import { Skill } from '../entities/skill.entity';
+import { WorkExperience } from '../entities/work-experience.entity';
+import { CvService } from './cv.service';
 
 @Controller()
 export class CvController {

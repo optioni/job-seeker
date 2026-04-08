@@ -9,10 +9,12 @@ import {
     Patch,
     Post,
 } from '@nestjs/common';
-import { JobSourcesService, CreateJobSourceDto, UpdateJobSourceDto } from './job-sources.service';
+
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JobSourcePreset } from '../entities/job-source-preset.entity';
 import { JobSource } from '../entities/job-source.entity';
+import type { CreateJobSourceDto, UpdateJobSourceDto } from './job-sources.service';
+import { JobSourcesService } from './job-sources.service';
 
 @Controller()
 export class JobSourcesController {

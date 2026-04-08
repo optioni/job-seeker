@@ -7,9 +7,10 @@ import {
     Patch,
     Post,
 } from '@nestjs/common';
-import { PreferencesService } from './preferences.service';
+
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JobPreferences } from '../entities/job-preferences.entity';
+import { PreferencesService } from './preferences.service';
 
 @Controller('preferences')
 export class PreferencesController {

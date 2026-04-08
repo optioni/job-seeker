@@ -1,8 +1,9 @@
+import { EntityRepository } from '@mikro-orm/core';
+import { InjectRepository } from '@mikro-orm/nestjs';
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
 import * as bcrypt from 'bcrypt';
+
 import { User } from '../entities/user.entity';
 
 @Injectable()
@@ -20,8 +21,10 @@ export class AuthService {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const user = this.userRepository.create({ email, passwordHash });
-        await this.userRepository.getEntityManager().persistAndFlush(user);
+        const user = this.userRepository.create({ email, passwordHash, createdAt: new Date() });
+        const em = this.userRepository.getEntityManager();
+        em.persist(user);
+        await em.flush();
 
         const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
         return { accessToken };

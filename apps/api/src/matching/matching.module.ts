@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { JobListing } from '../entities/job-listing.entity';
-import { JobApplication } from '../entities/job-application.entity';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+
 import { CvProfile } from '../entities/cv-profile.entity';
+import { JobApplication } from '../entities/job-application.entity';
+import { JobListing } from '../entities/job-listing.entity';
 import { JobPreferences } from '../entities/job-preferences.entity';
 import { MatchingProcessor } from './matching.processor';
 

@@ -1,12 +1,13 @@
+import { type IngestionJobPayload } from '@job-seeker/shared';
+import { EntityManager } from '@mikro-orm/core';
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { EntityManager } from '@mikro-orm/core';
-import { JobSource } from '../entities/job-source.entity';
+import type { Queue } from 'bull';
+
 import { JobListing } from '../entities/job-listing.entity';
+import { JobSource } from '../entities/job-source.entity';
 import { RssAdapter } from './rss.adapter';
-import type { IngestionJobPayload } from '@job-seeker/shared';
 
 @Injectable()
 export class IngestionCron {
@@ -26,30 +27,40 @@ export class IngestionCron {
         for (const source of sources) {
             try {
                 await this.pollSource(source, em);
-            } catch (err) {
-                this.logger.error(`Failed to poll source ${source.id}: ${String(err)}`);
+            } catch (error) {
+                this.logger.error(`Failed to poll source ${source.id}: ${String(error)}`);
             }
         }
     }
 
     private async pollSource(source: JobSource, em: EntityManager) {
-        const urlParams: Record<string, string> = {};
+        const urlParameters: Record<string, string> = {};
         for (const [key, value] of Object.entries(source.filters ?? {})) {
             const urlKey = source.preset.filterConfig[key];
-            if (urlKey) urlParams[urlKey] = value;
+            if (urlKey) {
+                urlParameters[urlKey] = value;
+            }
         }
 
-        const candidates = await this.rssAdapter.fetchListings(source.preset.baseUrl, urlParams);
+        const candidates = await this.rssAdapter.fetchListings(source.preset.baseUrl, urlParameters);
 
+        // eslint-disable-next-line unicorn/no-array-method-this-argument
         const existing = await em.find(JobListing, { source });
-        const existingSet = new Set(existing.map(l => `${l.company}|${l.title}`));
+        const existingSet = new Set(existing.map((listing) => `${listing.company}|${listing.title}`));
 
         const newCandidates = candidates.filter(
-            c => !existingSet.has(`${c.company}|${c.title}`),
+            (candidate) => !existingSet.has(`${candidate.company}|${candidate.title}`),
         );
 
         for (const candidate of newCandidates) {
-            const payload: IngestionJobPayload = { sourceId: source.id, listing: candidate };
+            const payload: IngestionJobPayload = {
+                sourceId: source.id,
+                listing: {
+                    ...candidate,
+                    scrapedAt: candidate.scrapedAt.toISOString(),
+                    publishedAt: candidate.publishedAt?.toISOString(),
+                },
+            };
             await this.ingestionQueue.add(payload);
         }
 

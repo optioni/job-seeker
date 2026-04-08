@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+
 import { JobPreferences } from '../entities/job-preferences.entity';
-import { PreferencesService } from './preferences.service';
 import { PreferencesController } from './preferences.controller';
+import { PreferencesService } from './preferences.service';
 
 @Module({
     imports: [

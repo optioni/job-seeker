@@ -6,7 +6,9 @@ import {
     HttpStatus,
     Post,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IsEmail, IsString, MinLength } from 'class-validator';
+
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 
@@ -21,15 +23,19 @@ class AuthDto {
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly config: ConfigService,
+    ) {}
 
     @Public()
     @Post('register')
     @HttpCode(HttpStatus.CREATED)
     async register(@Body() body: AuthDto): Promise<{ accessToken: string }> {
-        if (process.env.REGISTRATION_ENABLED === 'false') {
+        if (!this.config.get<boolean>('REGISTRATION_ENABLED')) {
             throw new ForbiddenException('Registration is disabled');
         }
+
         return this.authService.register(body.email, body.password);
     }
 

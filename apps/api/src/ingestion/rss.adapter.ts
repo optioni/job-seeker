@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import Parser from 'rss-parser';
 
 export interface CandidateListing {
-    externalId: string;
-    url: string;
-    title: string;
-    company: string;
-    description: string;
-    scrapedAt: Date;
-    publishedAt?: Date;
+    externalId: string
+    url: string
+    title: string
+    company: string
+    description: string
+    scrapedAt: Date
+    publishedAt?: Date
 }
 
 @Injectable()
@@ -23,7 +23,7 @@ export class RssAdapter {
 
         const feed = await this.parser.parseURL(url.toString());
 
-        return (feed.items ?? []).map(item => ({
+        return (feed.items ?? []).map((item) => ({
             externalId: item.guid ?? item.link ?? '',
             url: item.link ?? '',
             title: item.title ?? '',

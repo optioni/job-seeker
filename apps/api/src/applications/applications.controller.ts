@@ -1,7 +1,8 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ApplicationsService } from './applications.service';
+
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JobApplication } from '../entities/job-application.entity';
+import { ApplicationsService } from './applications.service';
 
 @Controller('applications')
 export class ApplicationsController {

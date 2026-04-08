@@ -1,14 +1,15 @@
-import { Process, Processor, InjectQueue } from '@nestjs/bull';
-import { Job, Queue } from 'bull';
-import { Logger } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
-import { generateObject, generateText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
+import { type DocumentJobPayload, type GenerationJobPayload } from '@job-seeker/shared';
+import { EntityManager } from '@mikro-orm/core';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
+import { generateObject, generateText } from 'ai';
+import type { Job, Queue } from 'bull';
 import { z } from 'zod';
-import { JobApplication } from '../entities/job-application.entity';
+
 import { CvProfile } from '../entities/cv-profile.entity';
+import { JobApplication } from '../entities/job-application.entity';
 import { JobPreferences } from '../entities/job-preferences.entity';
-import type { GenerationJobPayload, DocumentJobPayload } from '@job-seeker/shared';
 
 const cvSchema = z.object({
     personalInfo: z.object({
@@ -38,10 +39,19 @@ const cvSchema = z.object({
         startDate: z.string(),
         endDate: z.string().optional(),
     })),
-    skills: z.array(z.object({ name: z.string(), level: z.string().optional(), category: z.string().optional() })),
+    skills: z.array(z.object({
+        name: z.string(), level: z.string().optional(), category: z.string().optional(),
+    })),
     languages: z.array(z.object({ language: z.string(), proficiency: z.string() })),
-    certifications: z.array(z.object({ name: z.string(), issuer: z.string(), date: z.string(), url: z.string().optional() })),
-    projects: z.array(z.object({ name: z.string(), description: z.string(), url: z.string().optional(), technologies: z.array(z.string()).optional() })),
+    certifications: z.array(z.object({
+        name: z.string(), issuer: z.string(), date: z.string(), url: z.string().optional(),
+    })),
+    projects: z.array(z.object({
+        name: z.string(),
+        description: z.string(),
+        url: z.string().optional(),
+        technologies: z.array(z.string()).optional(),
+    })),
 });
 
 @Processor('generation')

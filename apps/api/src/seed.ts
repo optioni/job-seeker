@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 import { MikroORM } from '@mikro-orm/postgresql';
-import config from './mikro-orm.config';
+
 import { JobSourcePreset } from './entities/job-source-preset.entity';
+import config from './mikro-orm.config';
 
 const presets = [
     {
@@ -56,12 +57,12 @@ async function seed(): Promise<void> {
         for (const presetData of presets) {
             const existing = await em.findOne(JobSourcePreset, { name: presetData.name });
 
-            if (!existing) {
+            if (existing) {
+                console.log(`Preset already exists, skipping: ${presetData.name}`);
+            } else {
                 const preset = em.create(JobSourcePreset, presetData);
                 em.persist(preset);
                 console.log(`Created preset: ${presetData.name}`);
-            } else {
-                console.log(`Preset already exists, skipping: ${presetData.name}`);
             }
         }
 
@@ -74,7 +75,7 @@ async function seed(): Promise<void> {
 
 seed()
     .then(() => process.exit(0))
-    .catch((err: unknown) => {
-        console.error('Seed failed:', err);
+    .catch((error: unknown) => {
+        console.error('Seed failed:', error);
         process.exit(1);
     });
