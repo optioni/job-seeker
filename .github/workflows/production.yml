@@ -1,0 +1,96 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  compute-version:
+    name: Compute CalVer Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calver.outputs.version }}
+    steps:
+      - name: Checkout with full tag history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next CalVer version
+        id: calver
+        run: |
+          YEAR=$(date -u +%Y)
+          MONTH=$(date -u +%m)
+          PREFIX="${YEAR}.${MONTH}"
+
+          # Find all existing tags for current year.month, extract MICRO values
+          HIGHEST=$(git tag --list "${PREFIX}.*" | sed "s/^${PREFIX}\.//" | sort -n | tail -1)
+
+          if [ -z "$HIGHEST" ]; then
+            MICRO=0
+          else
+            MICRO=$((HIGHEST + 1))
+          fi
+
+          VERSION="${PREFIX}.${MICRO}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Computed version: ${VERSION}"
+
+  build-and-push:
+    name: Build and Push Images
+    runs-on:
+      group: arm-runners
+    needs: compute-version
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.yarn/cache
+          key: yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/job-seeker-api:${{ needs.compute-version.outputs.version }}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/job-seeker-web:${{ needs.compute-version.outputs.version }}
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create release
+        run: |
+          gh release create "${{ needs.compute-version.outputs.version }}" \
+            --title "${{ needs.compute-version.outputs.version }}" \
+            --target main \
+            --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
