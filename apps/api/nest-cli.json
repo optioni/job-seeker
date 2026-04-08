@@ -4,6 +4,9 @@
     "sourceRoot": "src",
     "compilerOptions": {
         "builder": "swc",
-        "deleteOutDir": true
+        "deleteOutDir": true,
+        "assets": [
+            { "include": "document/templates/**/*", "watchAssets": true }
+        ]
     }
 }
