@@ -1,15 +1,17 @@
-import { Process, Processor, InjectQueue } from '@nestjs/bull';
-import { Job, Queue } from 'bull';
-import { Logger } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
-import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
+import { type GenerationJobPayload, type MatchingJobPayload } from '@job-seeker/shared';
+import { EntityManager } from '@mikro-orm/core';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
+import { generateObject } from 'ai';
+import type { Job, Queue } from 'bull';
 import { z } from 'zod';
-import { JobListing } from '../entities/job-listing.entity';
-import { JobApplication } from '../entities/job-application.entity';
+
 import { CvProfile } from '../entities/cv-profile.entity';
+import { JobApplication } from '../entities/job-application.entity';
+import { JobListing } from '../entities/job-listing.entity';
 import { JobPreferences } from '../entities/job-preferences.entity';
-import type { MatchingJobPayload, GenerationJobPayload } from '@job-seeker/shared';
+import { formatCvForMatching } from './format-cv';
 
 const matchSchema = z.object({
     match: z.boolean(),
@@ -55,8 +57,8 @@ You are evaluating whether a job listing matches a candidate profile.
 
 ${languageInstruction}
 
-## Candidate CV
-${JSON.stringify(cvProfile, null, 2)}
+## Candidate Profile
+${cvProfile ? formatCvForMatching(cvProfile) : '(no CV on file)'}
 
 ## Job Preferences
 ${JSON.stringify(preferences, null, 2)}
@@ -84,7 +86,8 @@ Provide a match decision (true/false), a score from 0-100, and a rationale.
             createdAt: new Date(),
         });
 
-        await em.persistAndFlush(application);
+        em.persist(application);
+        await em.flush();
 
         if (result.match) {
             const payload: GenerationJobPayload = { applicationId: application.id };
