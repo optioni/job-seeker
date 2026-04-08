@@ -31,7 +31,7 @@ docker-compose.yml
 - **LLM**: Claude Haiku via `@ai-sdk/anthropic` + Vercel AI SDK (`generateObject`)
 - **PDF**: Puppeteer (HTML templates → PDF in memory, not persisted)
 - **Email**: Nodemailer (SMTP, daily digest)
-- **API spec**: JSON:API via `@klerick/nestjs-json-api`
+- **API spec**: JSON:API via `@klerick/json-api-nestjs`
 - **Package manager**: Yarn 4.13.0
 
 ---
