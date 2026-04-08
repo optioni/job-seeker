@@ -1,27 +1,32 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { EntityManager } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
-import { JobApplication } from '../entities/job-application.entity';
-import * as nodemailer from 'nodemailer';
-import * as FormData from 'form-data';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
+import FormData from 'form-data';
 import * as fs from 'fs';
+import * as nodemailer from 'nodemailer';
 import * as path from 'path';
+import { firstValueFrom } from 'rxjs';
+
+import { JobApplication } from '../entities/job-application.entity';
 
 @Injectable()
 export class DigestCron {
     private readonly logger = new Logger(DigestCron.name);
+
     private readonly cvTemplate: string;
+
     private readonly coverLetterTemplate: string;
 
     constructor(
         private readonly em: EntityManager,
         private readonly httpService: HttpService,
+        private readonly config: ConfigService,
     ) {
-        const templatesDir = path.join(__dirname, '..', 'document', 'templates');
-        this.cvTemplate = fs.readFileSync(path.join(templatesDir, 'cv.html'), 'utf-8');
-        this.coverLetterTemplate = fs.readFileSync(path.join(templatesDir, 'cover-letter.html'), 'utf-8');
+        const templatesDirectory = path.join(__dirname, '..', 'document', 'templates');
+        this.cvTemplate = fs.readFileSync(path.join(templatesDirectory, 'cv.html'), 'utf8');
+        this.coverLetterTemplate = fs.readFileSync(path.join(templatesDirectory, 'cover-letter.html'), 'utf8');
     }
 
     @Cron('0 8 * * *')
@@ -42,17 +47,20 @@ export class DigestCron {
         const byUser = new Map<string, typeof applications>();
         for (const app of applications) {
             const userId = app.listing.source.user.id;
-            if (!byUser.has(userId)) byUser.set(userId, []);
+            if (!byUser.has(userId)) {
+                byUser.set(userId, []);
+            }
+
             byUser.get(userId)!.push(app);
         }
 
-        const gotenbergUrl = process.env.GOTENBERG_URL ?? 'http://gotenberg:3000';
+        const gotenbergUrl = this.config.get<string>('GOTENBERG_URL')!;
         const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT ?? '587'),
+            host: this.config.get<string>('SMTP_HOST'),
+            port: this.config.get<number>('SMTP_PORT'),
             auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
+                user: this.config.get<string>('SMTP_USER'),
+                pass: this.config.get<string>('SMTP_PASS'),
             },
         });
 
@@ -79,7 +87,7 @@ export class DigestCron {
                 if (app.coverLetterText) {
                     const coverHtml = this.coverLetterTemplate.replace(
                         '{{coverLetterText}}',
-                        app.coverLetterText.replace(/\n/g, '<br>'),
+                        app.coverLetterText.replaceAll('\n', '<br>'),
                     );
                     const coverPdf = await this.htmlToPdf(gotenbergUrl, coverHtml);
                     attachments.push({ filename: `cover-letter-${app.id}.pdf`, content: coverPdf });
@@ -87,7 +95,7 @@ export class DigestCron {
             }
 
             await transporter.sendMail({
-                from: process.env.SMTP_FROM,
+                from: this.config.get<string>('SMTP_FROM'),
                 to: recipient,
                 subject: `Job Application Digest — ${userApps.length} match(es)`,
                 html: bodyLines.join(''),
@@ -115,14 +123,14 @@ export class DigestCron {
 
         const workHtml = workExperiences
             .map(
-                (w) => `
+                (workEntry) => `
             <div class="entry">
                 <div class="entry-header">
-                    <span class="title-company">${String(w['role'] ?? '')} at ${String(w['company'] ?? '')}</span>
-                    <span class="dates">${String(w['startDate'] ?? '')} – ${w['current'] ? 'Present' : String(w['endDate'] ?? '')}</span>
+                    <span class="title-company">${String(workEntry['role'] ?? '')} at ${String(workEntry['company'] ?? '')}</span>
+                    <span class="dates">${String(workEntry['startDate'] ?? '')} – ${workEntry['current'] ? 'Present' : String(workEntry['endDate'] ?? '')}</span>
                 </div>
-                <p>${String(w['description'] ?? '')}</p>
-                ${w['highlights'] ? `<ul>${(w['highlights'] as string[]).map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}
+                <p>${String(workEntry['description'] ?? '')}</p>
+                ${workEntry['highlights'] ? `<ul>${(workEntry['highlights'] as string[]).map((highlight) => `<li>${highlight}</li>`).join('')}</ul>` : ''}
             </div>
         `,
             )
@@ -130,37 +138,37 @@ export class DigestCron {
 
         const educationHtml = educations
             .map(
-                (e) => `
+                (education) => `
             <div class="education-entry">
-                <div class="degree">${e['degree'] ?? ''} in ${e['field'] ?? ''}</div>
-                <div class="institution">${e['institution'] ?? ''}</div>
-                <div class="dates">${e['startDate'] ?? ''} – ${e['endDate'] ?? ''}</div>
+                <div class="degree">${education['degree'] ?? ''} in ${education['field'] ?? ''}</div>
+                <div class="institution">${education['institution'] ?? ''}</div>
+                <div class="dates">${education['startDate'] ?? ''} – ${education['endDate'] ?? ''}</div>
             </div>
         `,
             )
             .join('');
 
         const skillsHtml = skills
-            .map((s) => `<span class="skill">${s['name'] ?? ''}${s['level'] ? ` (${s['level']})` : ''}</span>`)
+            .map((skill) => `<span class="skill">${skill['name'] ?? ''}${skill['level'] ? ` (${skill['level']})` : ''}</span>`)
             .join('');
 
         const languagesHtml = languages
-            .map((l) => `<span class="skill">${l['language'] ?? ''} — ${l['proficiency'] ?? ''}</span>`)
+            .map((lang) => `<span class="skill">${lang['language'] ?? ''} — ${lang['proficiency'] ?? ''}</span>`)
             .join('');
 
         const certsHtml = certifications
             .map(
-                (c) => `<div class="cert-entry"><strong>${c['name'] ?? ''}</strong> — ${c['issuer'] ?? ''} (${c['date'] ?? ''})</div>`,
+                (cert) => `<div class="cert-entry"><strong>${cert['name'] ?? ''}</strong> — ${cert['issuer'] ?? ''} (${cert['date'] ?? ''})</div>`,
             )
             .join('');
 
         const projectsHtml = projects
             .map(
-                (p) => `
+                (project) => `
             <div class="project-entry">
-                <span class="project-name">${String(p['name'] ?? '')}</span>${p['url'] ? ` — <a href="${String(p['url'])}">${String(p['url'])}</a>` : ''}
-                <p>${String(p['description'] ?? '')}</p>
-                ${p['technologies'] ? `<p class="tech">Technologies: ${(p['technologies'] as string[]).join(', ')}</p>` : ''}
+                <span class="project-name">${String(project['name'] ?? '')}</span>${project['url'] ? ` — <a href="${String(project['url'])}">${String(project['url'])}</a>` : ''}
+                <p>${String(project['description'] ?? '')}</p>
+                ${project['technologies'] ? `<p class="tech">Technologies: ${(project['technologies'] as string[]).join(', ')}</p>` : ''}
             </div>
         `,
             )
@@ -185,7 +193,7 @@ export class DigestCron {
 
     private async htmlToPdf(gotenbergUrl: string, html: string): Promise<Buffer> {
         const formData = new FormData();
-        formData.append('files', Buffer.from(html, 'utf-8'), {
+        formData.append('files', Buffer.from(html, 'utf8'), {
             filename: 'index.html',
             contentType: 'text/html',
         });

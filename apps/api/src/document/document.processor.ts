@@ -1,29 +1,37 @@
-import { Process, Processor, InjectQueue } from '@nestjs/bull';
-import { Job, Queue } from 'bull';
-import { Logger } from '@nestjs/common';
+import { type DocumentJobPayload, type NotificationJobPayload } from '@job-seeker/shared';
 import { EntityManager } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Job, Queue } from 'bull';
+import FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as FormData from 'form-data';
 import { firstValueFrom } from 'rxjs';
+
 import { JobApplication } from '../entities/job-application.entity';
-import type { DocumentJobPayload, NotificationJobPayload } from '@job-seeker/shared';
 
 @Processor('document')
 export class DocumentProcessor {
     private readonly logger = new Logger(DocumentProcessor.name);
+
     private readonly cvTemplate: string;
+
     private readonly coverLetterTemplate: string;
+
+    private readonly gotenbergUrl: string;
 
     constructor(
         private readonly em: EntityManager,
         private readonly httpService: HttpService,
+        private readonly config: ConfigService,
         @InjectQueue('notification') private readonly notificationQueue: Queue,
     ) {
-        const templatesDir = path.join(__dirname, 'templates');
-        this.cvTemplate = fs.readFileSync(path.join(templatesDir, 'cv.html'), 'utf-8');
-        this.coverLetterTemplate = fs.readFileSync(path.join(templatesDir, 'cover-letter.html'), 'utf-8');
+        this.gotenbergUrl = this.config.get<string>('GOTENBERG_URL')!;
+        const templatesDirectory = path.join(__dirname, 'templates');
+        this.cvTemplate = fs.readFileSync(path.join(templatesDirectory, 'cv.html'), 'utf8');
+        this.coverLetterTemplate = fs.readFileSync(path.join(templatesDirectory, 'cover-letter.html'), 'utf8');
     }
 
     @Process()
@@ -44,10 +52,8 @@ export class DocumentProcessor {
             coverLetterText,
         );
 
-        const gotenbergUrl = process.env.GOTENBERG_URL ?? 'http://gotenberg:3000';
-
-        const cvPdf = await this.htmlToPdf(gotenbergUrl, cvHtml);
-        const coverLetterPdf = await this.htmlToPdf(gotenbergUrl, coverLetterHtml);
+        const cvPdf = await this.htmlToPdf(this.gotenbergUrl, cvHtml);
+        const coverLetterPdf = await this.htmlToPdf(this.gotenbergUrl, coverLetterHtml);
 
         const payload: NotificationJobPayload = { applicationId: application.id };
         await this.notificationQueue.add(payload, {
@@ -61,7 +67,9 @@ export class DocumentProcessor {
     }
 
     private renderCvTemplate(cv: Record<string, unknown> | null): string {
-        if (!cv) return '<html><body><p>No CV data available.</p></body></html>';
+        if (!cv) {
+            return '<html><body><p>No CV data available.</p></body></html>';
+        }
 
         const personal = (cv['personalInfo'] as Record<string, string>) ?? {};
         const workExperiences = (cv['workExperiences'] as Array<Record<string, unknown>>) ?? [];
@@ -73,14 +81,14 @@ export class DocumentProcessor {
 
         const workHtml = workExperiences
             .map(
-                (w) => `
+                (workEntry) => `
             <div class="entry">
                 <div class="entry-header">
-                    <span class="title-company">${String(w['role'] ?? '')} at ${String(w['company'] ?? '')}</span>
-                    <span class="dates">${String(w['startDate'] ?? '')} – ${w['current'] ? 'Present' : String(w['endDate'] ?? '')}</span>
+                    <span class="title-company">${String(workEntry['role'] ?? '')} at ${String(workEntry['company'] ?? '')}</span>
+                    <span class="dates">${String(workEntry['startDate'] ?? '')} – ${workEntry['current'] ? 'Present' : String(workEntry['endDate'] ?? '')}</span>
                 </div>
-                <p>${String(w['description'] ?? '')}</p>
-                ${w['highlights'] ? `<ul>${(w['highlights'] as string[]).map((h) => `<li>${h}</li>`).join('')}</ul>` : ''}
+                <p>${String(workEntry['description'] ?? '')}</p>
+                ${workEntry['highlights'] ? `<ul>${(workEntry['highlights'] as string[]).map((highlight) => `<li>${highlight}</li>`).join('')}</ul>` : ''}
             </div>
         `,
             )
@@ -88,37 +96,37 @@ export class DocumentProcessor {
 
         const educationHtml = educations
             .map(
-                (e) => `
+                (education) => `
             <div class="education-entry">
-                <div class="degree">${e['degree'] ?? ''} in ${e['field'] ?? ''}</div>
-                <div class="institution">${e['institution'] ?? ''}</div>
-                <div class="dates">${e['startDate'] ?? ''} – ${e['endDate'] ?? ''}</div>
+                <div class="degree">${education['degree'] ?? ''} in ${education['field'] ?? ''}</div>
+                <div class="institution">${education['institution'] ?? ''}</div>
+                <div class="dates">${education['startDate'] ?? ''} – ${education['endDate'] ?? ''}</div>
             </div>
         `,
             )
             .join('');
 
         const skillsHtml = skills
-            .map((s) => `<span class="skill">${s['name'] ?? ''}${s['level'] ? ` (${s['level']})` : ''}</span>`)
+            .map((skill) => `<span class="skill">${skill['name'] ?? ''}${skill['level'] ? ` (${skill['level']})` : ''}</span>`)
             .join('');
 
         const languagesHtml = languages
-            .map((l) => `<span class="skill">${l['language'] ?? ''} — ${l['proficiency'] ?? ''}</span>`)
+            .map((lang) => `<span class="skill">${lang['language'] ?? ''} — ${lang['proficiency'] ?? ''}</span>`)
             .join('');
 
         const certsHtml = certifications
             .map(
-                (c) => `<div class="cert-entry"><strong>${c['name'] ?? ''}</strong> — ${c['issuer'] ?? ''} (${c['date'] ?? ''})</div>`,
+                (cert) => `<div class="cert-entry"><strong>${cert['name'] ?? ''}</strong> — ${cert['issuer'] ?? ''} (${cert['date'] ?? ''})</div>`,
             )
             .join('');
 
         const projectsHtml = projects
             .map(
-                (p) => `
+                (project) => `
             <div class="project-entry">
-                <span class="project-name">${String(p['name'] ?? '')}</span>${p['url'] ? ` — <a href="${String(p['url'])}">${String(p['url'])}</a>` : ''}
-                <p>${String(p['description'] ?? '')}</p>
-                ${p['technologies'] ? `<p class="tech">Technologies: ${(p['technologies'] as string[]).join(', ')}</p>` : ''}
+                <span class="project-name">${String(project['name'] ?? '')}</span>${project['url'] ? ` — <a href="${String(project['url'])}">${String(project['url'])}</a>` : ''}
+                <p>${String(project['description'] ?? '')}</p>
+                ${project['technologies'] ? `<p class="tech">Technologies: ${(project['technologies'] as string[]).join(', ')}</p>` : ''}
             </div>
         `,
             )
@@ -143,7 +151,7 @@ export class DocumentProcessor {
 
     private async htmlToPdf(gotenbergUrl: string, html: string): Promise<Buffer> {
         const formData = new FormData();
-        formData.append('files', Buffer.from(html, 'utf-8'), {
+        formData.append('files', Buffer.from(html, 'utf8'), {
             filename: 'index.html',
             contentType: 'text/html',
         });
