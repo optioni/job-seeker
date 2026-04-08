@@ -2,7 +2,7 @@ import type { JobListing } from './entities/jobs';
 
 export interface IngestionJobPayload {
     sourceId: string;
-    listing: Omit<JobListing, 'id'>;
+    listing: Omit<JobListing, 'id' | 'sourceId'>;
 }
 
 export interface MatchingJobPayload {
