@@ -1,3 +1,7 @@
+# Env files
+.env
+
+# Yarn files
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -9,6 +13,11 @@
 # build artifacts that should be gitignored
 node_modules
 
+# Build artifacts
+dist
+build
+.nuxt
+
 # Swap the comments on the following lines if you wish to use zero-installs
 # In that case, don't forget to run `yarn config set enableGlobalCache false`!
 # Documentation here: https://yarnpkg.com/features/caching#zero-installs
@@ -18,3 +27,6 @@ node_modules
 
 # Git worktrees
 .worktrees
+
+# Superpowers
+.superpowers

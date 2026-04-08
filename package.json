@@ -5,5 +5,15 @@
     "workspaces": [
         "apps/*",
         "packages/*"
-    ]
+    ],
+    "scripts": {
+        "dev": "yarn workspaces foreach --all -pi run dev",
+        "dev:api": "yarn workspace @job-seeker/api run start:dev",
+        "dev:web": "yarn workspace @job-seeker/web run dev",
+        "lint": "yarn workspaces foreach --all run lint",
+        "lint:fix": "yarn workspaces foreach --all run lint:fix",
+        "typecheck": "yarn workspaces foreach --all run typecheck",
+        "test": "yarn workspaces foreach --all run test",
+        "test:coverage": "yarn workspaces foreach --all run test:coverage"
+    }
 }
