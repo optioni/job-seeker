@@ -4,7 +4,7 @@
             class="text-3xl font-semibold italic mb-6"
             style="font-family: var(--font-display); color: var(--color-text-default)"
         >
-            CV Editor
+            {{ $t('cv.title') }}
         </h1>
 
         <p v-if="loadError"
@@ -20,53 +20,60 @@
         >
             <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
                 style="color: var(--color-text-faint)">
-                Personal Information
+                {{ $t('cv.personalInfo') }}
             </h2>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <UFormField label="Full Name"
-                    name="fullName">
-                    <UInput v-model="profile.personalInfo.fullName"
+                <UFormField :label="$t('cv.firstNameLabel')"
+                    name="firstName">
+                    <UInput v-model="profile.personalInfo.firstName"
                         type="text"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="Email"
+                <UFormField :label="$t('cv.lastNameLabel')"
+                    name="lastName">
+                    <UInput v-model="profile.personalInfo.lastName"
+                        type="text"
+                        class="w-full" />
+                </UFormField>
+
+                <UFormField :label="$t('cv.emailLabel')"
                     name="email">
                     <UInput v-model="profile.personalInfo.email"
                         type="email"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="Phone"
+                <UFormField :label="$t('cv.phoneLabel')"
                     name="phone">
                     <UInput v-model="profile.personalInfo.phone"
                         type="tel"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="Address"
-                    name="address">
-                    <UInput v-model="profile.personalInfo.address"
+                <UFormField :label="$t('cv.locationLabel')"
+                    name="location">
+                    <UInput v-model="profile.personalInfo.location"
                         type="text"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="LinkedIn"
+                <UFormField :label="$t('cv.linkedInLabel')"
                     name="linkedIn">
                     <UInput v-model="profile.personalInfo.linkedIn"
                         type="url"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="GitHub"
+                <UFormField :label="$t('cv.gitHubLabel')"
                     name="github">
                     <UInput v-model="profile.personalInfo.github"
                         type="url"
                         class="w-full" />
                 </UFormField>
 
-                <UFormField label="Website"
+                <UFormField :label="$t('cv.websiteLabel')"
                     name="website"
                     class="col-span-2">
                     <UInput v-model="profile.personalInfo.website"
@@ -75,13 +82,13 @@
                 </UFormField>
             </div>
 
-            <UFormField label="Summary"
+            <UFormField :label="$t('cv.summaryLabel')"
                 name="summary"
                 class="mb-4">
                 <UTextarea
                     v-model="profile.summary"
                     :rows="5"
-                    placeholder="Professional summary..."
+                    :placeholder="$t('cv.summaryPlaceholder')"
                     class="w-full"
                 />
             </UFormField>
@@ -91,7 +98,7 @@
                     variant="solid"
                     :loading="saving"
                     @click="saveProfile">
-                    Save Profile
+                    {{ $t('cv.saveProfile') }}
                 </UButton>
 
                 <span
@@ -115,32 +122,32 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Entry
+                            {{ $t('cv.addEntry') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Company"
+                            <UFormField :label="$t('cv.companyLabel')"
                                 name="company">
                                 <UInput v-model="newWork.company"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Title"
-                                name="title">
-                                <UInput v-model="newWork.title"
+                            <UFormField :label="$t('cv.roleLabel')"
+                                name="role">
+                                <UInput v-model="newWork.role"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Start Date"
+                            <UFormField :label="$t('cv.startDateLabel')"
                                 name="startDate">
                                 <UInput v-model="newWork.startDate"
                                     type="date"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="End Date"
+                            <UFormField :label="$t('cv.endDateLabel')"
                                 name="endDate">
                                 <UInput v-model="newWork.endDate"
                                     type="date"
@@ -151,10 +158,10 @@
 
                         <div class="flex items-center gap-2 mb-3">
                             <UCheckbox v-model="newWork.current"
-                                label="Currently working here" />
+                                :label="$t('cv.currentlyWorkingHere')" />
                         </div>
 
-                        <UFormField label="Description"
+                        <UFormField :label="$t('cv.descriptionLabel')"
                             name="description"
                             class="mb-3">
                             <UTextarea v-model="newWork.description"
@@ -166,7 +173,7 @@
                             variant="solid"
                             size="sm"
                             @click="addWorkExperience">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -181,12 +188,12 @@
                             <div>
                                 <p class="font-semibold text-sm"
                                     style="color: var(--color-text-default)">
-                                    {{ w.title }} at {{ w.company }}
+                                    {{ w.role }} at {{ w.company }}
                                 </p>
 
                                 <p class="text-xs mt-0.5"
                                     style="color: var(--color-text-faint)">
-                                    {{ w.startDate }} – {{ w.current ? 'Present' : w.endDate }}
+                                    {{ w.startDate }} – {{ w.current ? $t('cv.present') : w.endDate }}
                                 </p>
 
                                 <p v-if="w.description"
@@ -200,7 +207,7 @@
                                 variant="soft"
                                 size="xs"
                                 @click="deleteWorkExperience(w.id!)">
-                                Delete
+                                {{ $t('common.delete') }}
                             </UButton>
                         </div>
                     </div>
@@ -216,39 +223,39 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Entry
+                            {{ $t('cv.addEntry') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Institution"
+                            <UFormField :label="$t('cv.institutionLabel')"
                                 name="institution">
                                 <UInput v-model="newEducation.institution"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Degree"
+                            <UFormField :label="$t('cv.degreeLabel')"
                                 name="degree">
                                 <UInput v-model="newEducation.degree"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Field of Study"
+                            <UFormField :label="$t('cv.fieldOfStudyLabel')"
                                 name="field">
                                 <UInput v-model="newEducation.field"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Start Date"
+                            <UFormField :label="$t('cv.startDateLabel')"
                                 name="startDate">
                                 <UInput v-model="newEducation.startDate"
                                     type="date"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="End Date"
+                            <UFormField :label="$t('cv.endDateLabel')"
                                 name="endDate">
                                 <UInput v-model="newEducation.endDate"
                                     type="date"
@@ -256,19 +263,11 @@
                             </UFormField>
                         </div>
 
-                        <UFormField label="Description"
-                            name="description"
-                            class="mb-3">
-                            <UTextarea v-model="newEducation.description"
-                                :rows="3"
-                                class="w-full" />
-                        </UFormField>
-
                         <UButton color="primary"
                             variant="solid"
                             size="sm"
                             @click="addEducation">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -295,7 +294,7 @@
                                 variant="soft"
                                 size="xs"
                                 @click="deleteEducation(e.id!)">
-                                Delete
+                                {{ $t('common.delete') }}
                             </UButton>
                         </div>
                     </div>
@@ -311,18 +310,18 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Skill
+                            {{ $t('cv.addSkill') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Skill"
+                            <UFormField :label="$t('cv.skillLabel')"
                                 name="skillName">
                                 <UInput v-model="newSkill.name"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Level"
+                            <UFormField :label="$t('cv.levelLabel')"
                                 name="skillLevel">
                                 <USelect
                                     v-model="newSkill.level"
@@ -338,7 +337,7 @@
                             variant="solid"
                             size="sm"
                             @click="addSkill">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -374,21 +373,21 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Language
+                            {{ $t('cv.addLanguage') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Language"
+                            <UFormField :label="$t('cv.skillLabel')"
                                 name="langName">
-                                <UInput v-model="newLanguage.name"
+                                <UInput v-model="newLanguage.language"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Level"
-                                name="langLevel">
+                            <UFormField :label="$t('cv.proficiencyLabel')"
+                                name="langProficiency">
                                 <USelect
-                                    v-model="newLanguage.level"
+                                    v-model="newLanguage.proficiency"
                                     :items="languageLevelOptions"
                                     value-key="value"
                                     label-key="label"
@@ -401,7 +400,7 @@
                             variant="solid"
                             size="sm"
                             @click="addLanguage">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -416,7 +415,7 @@
                                 color: 'var(--color-accent)',
                             }"
                         >
-                            {{ l.name }} <em class="text-xs not-italic opacity-70">({{ l.level }})</em>
+                            {{ l.language }} <em class="text-xs not-italic opacity-70">({{ l.proficiency }})</em>
 
                             <button
                                 type="button"
@@ -437,39 +436,32 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Certification
+                            {{ $t('cv.addCertification') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Name"
+                            <UFormField :label="$t('cv.nameLabel')"
                                 name="certName">
                                 <UInput v-model="newCert.name"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Issuer"
+                            <UFormField :label="$t('cv.issuerLabel')"
                                 name="certIssuer">
                                 <UInput v-model="newCert.issuer"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Issue Date"
-                                name="certIssueDate">
-                                <UInput v-model="newCert.issueDate"
+                            <UFormField :label="$t('cv.dateLabel')"
+                                name="certDate">
+                                <UInput v-model="newCert.date"
                                     type="date"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="Expiry Date"
-                                name="certExpiryDate">
-                                <UInput v-model="newCert.expiryDate"
-                                    type="date"
-                                    class="w-full" />
-                            </UFormField>
-
-                            <UFormField label="URL"
+                            <UFormField :label="$t('cv.urlLabel')"
                                 name="certUrl"
                                 class="col-span-2">
                                 <UInput v-model="newCert.url"
@@ -482,7 +474,7 @@
                             variant="solid"
                             size="sm"
                             @click="addCertification">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -501,21 +493,21 @@
 
                                 <p class="text-xs mt-0.5"
                                     style="color: var(--color-text-faint)">
-                                    {{ c.issueDate }}<span v-if="c.expiryDate"> – {{ c.expiryDate }}</span>
+                                    {{ c.date }}
                                 </p>
 
                                 <a v-if="c.url"
                                     :href="c.url"
                                     target="_blank"
                                     class="text-xs"
-                                    style="color: var(--color-accent)">View</a>
+                                    style="color: var(--color-accent)">{{ $t('cv.view') }}</a>
                             </div>
 
                             <UButton color="error"
                                 variant="soft"
                                 size="xs"
                                 @click="deleteCertification(c.id!)">
-                                Delete
+                                {{ $t('common.delete') }}
                             </UButton>
                         </div>
                     </div>
@@ -531,40 +523,26 @@
                     >
                         <p class="text-xs font-semibold uppercase tracking-widest mb-3"
                             style="color: var(--color-text-faint)">
-                            Add Project
+                            {{ $t('cv.addProject') }}
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <UFormField label="Name"
+                            <UFormField :label="$t('cv.nameLabel')"
                                 name="projectName">
                                 <UInput v-model="newProject.name"
                                     type="text"
                                     class="w-full" />
                             </UFormField>
 
-                            <UFormField label="URL"
+                            <UFormField :label="$t('cv.urlLabel')"
                                 name="projectUrl">
                                 <UInput v-model="newProject.url"
                                     type="url"
                                     class="w-full" />
                             </UFormField>
-
-                            <UFormField label="Start Date"
-                                name="projectStartDate">
-                                <UInput v-model="newProject.startDate"
-                                    type="date"
-                                    class="w-full" />
-                            </UFormField>
-
-                            <UFormField label="End Date"
-                                name="projectEndDate">
-                                <UInput v-model="newProject.endDate"
-                                    type="date"
-                                    class="w-full" />
-                            </UFormField>
                         </div>
 
-                        <UFormField label="Description"
+                        <UFormField :label="$t('cv.descriptionLabel')"
                             name="projectDescription"
                             class="mb-3">
                             <UTextarea v-model="newProject.description"
@@ -576,7 +554,7 @@
                             variant="solid"
                             size="sm"
                             @click="addProject">
-                            Add
+                            {{ $t('common.add') }}
                         </UButton>
                     </div>
 
@@ -593,16 +571,11 @@
                                     {{ p.name }}
                                 </p>
 
-                                <p class="text-xs mt-0.5"
-                                    style="color: var(--color-text-faint)">
-                                    {{ p.startDate }}<span v-if="p.endDate"> – {{ p.endDate }}</span>
-                                </p>
-
                                 <a v-if="p.url"
                                     :href="p.url"
                                     target="_blank"
                                     class="text-xs"
-                                    style="color: var(--color-accent)">View</a>
+                                    style="color: var(--color-accent)">{{ $t('cv.view') }}</a>
 
                                 <p v-if="p.description"
                                     class="text-sm mt-1"
@@ -615,7 +588,7 @@
                                 variant="soft"
                                 size="xs"
                                 @click="deleteProject(p.id!)">
-                                Delete
+                                {{ $t('common.delete') }}
                             </UButton>
                         </div>
                     </div>
@@ -629,12 +602,14 @@
 definePageMeta({ layout: 'default' })
 
 const { apiFetch } = useApi()
+const { t } = useI18n()
 
 interface PersonalInfo {
-    fullName: string
+    firstName: string
+    lastName: string
     email: string
     phone: string
-    address: string
+    location: string
     linkedIn: string
     github: string
     website: string
@@ -643,7 +618,7 @@ interface PersonalInfo {
 interface WorkExperience {
     id?: string
     company: string
-    title: string
+    role: string
     startDate: string
     endDate: string
     current: boolean
@@ -657,7 +632,6 @@ interface Education {
     field: string
     startDate: string
     endDate: string
-    description: string
 }
 
 interface Skill {
@@ -668,16 +642,15 @@ interface Skill {
 
 interface Language {
     id?: string
-    name: string
-    level: string
+    language: string
+    proficiency: string
 }
 
 interface Certification {
     id?: string
     name: string
     issuer: string
-    issueDate: string
-    expiryDate: string
+    date: string
     url: string
 }
 
@@ -686,8 +659,6 @@ interface Project {
     name: string
     description: string
     url: string
-    startDate: string
-    endDate: string
 }
 
 interface CvProfile {
@@ -704,7 +675,7 @@ interface CvProfile {
 
 const profile = ref<CvProfile>({
     personalInfo: {
-        fullName: '', email: '', phone: '', address: '', linkedIn: '', github: '', website: '', 
+        firstName: '', lastName: '', email: '', phone: '', location: '', linkedIn: '', github: '', website: '',
     },
     summary: '',
     workExperiences: [],
@@ -723,28 +694,30 @@ const loadError = ref('')
 
 // Add forms
 const newWork = ref<WorkExperience>({
-    company: '', title: '', startDate: '', endDate: '', current: false, description: '', 
+    company: '', role: '', startDate: '', endDate: '', current: false, description: '',
 })
 const newEducation = ref<Education>({
-    institution: '', degree: '', field: '', startDate: '', endDate: '', description: '', 
+    institution: '', degree: '', field: '', startDate: '', endDate: '',
 })
-const newSkill = ref<Skill>({ name: '', level: '' })
-const newLanguage = ref<Language>({ name: '', level: '' })
+const newSkill = ref<Skill>({ name: '', level: 'beginner' })
+const newLanguage = ref<Language>({ language: '', proficiency: 'A1' })
 const newCert = ref<Certification>({
-    name: '', issuer: '', issueDate: '', expiryDate: '', url: '', 
+    name: '', issuer: '', date: '', url: '',
 })
 const newProject = ref<Project>({
-    name: '', description: '', url: '', startDate: '', endDate: '', 
+    name: '', description: '', url: '',
 })
 
 onMounted(async () => {
     try {
-        const data = await apiFetch<CvProfile>('/cv/profile')
-        profileId.value = data.id ?? null
-        profile.value = data
+        const data = await apiFetch<CvProfile | null>('/cv/profile')
+        if (data) {
+            profileId.value = data.id ?? null
+            profile.value = data
+        }
     } catch (e: unknown) {
         const status = (e as { response?: { status?: number } })?.response?.status
-        if (status !== 404) loadError.value = 'Failed to load CV profile'
+        if (status !== 404) loadError.value = t('cv.failedToLoad')
     }
 })
 
@@ -760,9 +733,9 @@ async function saveProfile() {
             body: { personalInfo: profile.value.personalInfo, summary: profile.value.summary },
         })
         profileId.value = data.id ?? null
-        saveMessage.value = 'Saved!'
+        saveMessage.value = t('common.saved')
     } catch {
-        saveMessage.value = 'Save failed'
+        saveMessage.value = t('common.saveFailed')
         saveFailed.value = true
     } finally {
         saving.value = false
@@ -770,104 +743,102 @@ async function saveProfile() {
 }
 
 async function addWorkExperience() {
-    const data = await apiFetch<WorkExperience>('/cv/work-experiences', { method: 'POST', body: newWork.value })
+    const data = await apiFetch<WorkExperience>(`/cv/profile/${profileId.value}/work-experiences`, { method: 'POST', body: newWork.value })
     profile.value.workExperiences.push(data)
     newWork.value = {
-        company: '', title: '', startDate: '', endDate: '', current: false, description: '', 
+        company: '', role: '', startDate: '', endDate: '', current: false, description: '',
     }
 }
 
 async function deleteWorkExperience(id: string) {
-    await apiFetch(`/cv/work-experiences/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/work-experiences/${id}`, { method: 'DELETE' })
     profile.value.workExperiences = profile.value.workExperiences.filter((w) => w.id !== id)
 }
 
 async function addEducation() {
-    const data = await apiFetch<Education>('/cv/educations', { method: 'POST', body: newEducation.value })
+    const data = await apiFetch<Education>(`/cv/profile/${profileId.value}/educations`, { method: 'POST', body: newEducation.value })
     profile.value.educations.push(data)
     newEducation.value = {
-        institution: '', degree: '', field: '', startDate: '', endDate: '', description: '', 
+        institution: '', degree: '', field: '', startDate: '', endDate: '',
     }
 }
 
 async function deleteEducation(id: string) {
-    await apiFetch(`/cv/educations/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/educations/${id}`, { method: 'DELETE' })
     profile.value.educations = profile.value.educations.filter((e) => e.id !== id)
 }
 
 async function addSkill() {
-    const data = await apiFetch<Skill>('/cv/skills', { method: 'POST', body: newSkill.value })
+    const data = await apiFetch<Skill>(`/cv/profile/${profileId.value}/skills`, { method: 'POST', body: newSkill.value })
     profile.value.skills.push(data)
-    newSkill.value = { name: '', level: '' }
+    newSkill.value = { name: '', level: 'beginner' }
 }
 
 async function deleteSkill(id: string) {
-    await apiFetch(`/cv/skills/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/skills/${id}`, { method: 'DELETE' })
     profile.value.skills = profile.value.skills.filter((s) => s.id !== id)
 }
 
 async function addLanguage() {
-    const data = await apiFetch<Language>('/cv/languages', { method: 'POST', body: newLanguage.value })
+    const data = await apiFetch<Language>(`/cv/profile/${profileId.value}/languages`, { method: 'POST', body: newLanguage.value })
     profile.value.languages.push(data)
-    newLanguage.value = { name: '', level: '' }
+    newLanguage.value = { language: '', proficiency: 'A1' }
 }
 
 async function deleteLanguage(id: string) {
-    await apiFetch(`/cv/languages/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/languages/${id}`, { method: 'DELETE' })
     profile.value.languages = profile.value.languages.filter((l) => l.id !== id)
 }
 
 async function addCertification() {
-    const data = await apiFetch<Certification>('/cv/certifications', { method: 'POST', body: newCert.value })
+    const data = await apiFetch<Certification>(`/cv/profile/${profileId.value}/certifications`, { method: 'POST', body: newCert.value })
     profile.value.certifications.push(data)
     newCert.value = {
-        name: '', issuer: '', issueDate: '', expiryDate: '', url: '', 
+        name: '', issuer: '', date: '', url: '',
     }
 }
 
 async function deleteCertification(id: string) {
-    await apiFetch(`/cv/certifications/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/certifications/${id}`, { method: 'DELETE' })
     profile.value.certifications = profile.value.certifications.filter((c) => c.id !== id)
 }
 
 async function addProject() {
-    const data = await apiFetch<Project>('/cv/projects', { method: 'POST', body: newProject.value })
+    const data = await apiFetch<Project>(`/cv/profile/${profileId.value}/projects`, { method: 'POST', body: newProject.value })
     profile.value.projects.push(data)
     newProject.value = {
-        name: '', description: '', url: '', startDate: '', endDate: '', 
+        name: '', description: '', url: '',
     }
 }
 
 async function deleteProject(id: string) {
-    await apiFetch(`/cv/projects/${id}`, { method: 'DELETE' })
+    await apiFetch(`/cv/profile/${profileId.value}/projects/${id}`, { method: 'DELETE' })
     profile.value.projects = profile.value.projects.filter((p) => p.id !== id)
 }
 
-const skillLevelOptions = [
-    { label: 'Select level', value: '' },
-    { label: 'Beginner', value: 'beginner' },
-    { label: 'Intermediate', value: 'intermediate' },
-    { label: 'Advanced', value: 'advanced' },
-    { label: 'Expert', value: 'expert' },
-]
+const skillLevelOptions = computed(() => [
+    { label: t('cv.skillBeginner'), value: 'beginner' },
+    { label: t('cv.skillIntermediate'), value: 'intermediate' },
+    { label: t('cv.skillAdvanced'), value: 'advanced' },
+    { label: t('cv.skillExpert'), value: 'expert' },
+])
 
-const languageLevelOptions = [
-    { label: 'Select level', value: '' },
-    { label: 'A1 – Beginner', value: 'A1' },
-    { label: 'A2 – Elementary', value: 'A2' },
-    { label: 'B1 – Intermediate', value: 'B1' },
-    { label: 'B2 – Upper Intermediate', value: 'B2' },
-    { label: 'C1 – Advanced', value: 'C1' },
-    { label: 'C2 – Proficient', value: 'C2' },
-    { label: 'Native', value: 'native' },
-]
+const languageLevelOptions = computed(() => [
+    { label: t('cv.langA1'), value: 'A1' },
+    { label: t('cv.langA2'), value: 'A2' },
+    { label: t('cv.langB1'), value: 'B1' },
+    { label: t('cv.langB2'), value: 'B2' },
+    { label: t('cv.langC1'), value: 'C1' },
+    { label: t('cv.langC2'), value: 'C2' },
+    { label: t('cv.langNative'), value: 'native' },
+])
 
-const accordionItems = [
-    { label: 'Work Experience', value: 'work' },
-    { label: 'Education', value: 'education' },
-    { label: 'Skills', value: 'skills' },
-    { label: 'Languages', value: 'languages' },
-    { label: 'Certifications', value: 'certifications' },
-    { label: 'Projects', value: 'projects' },
-]
+const accordionItems = computed(() => [
+    { label: t('cv.workExperience'), value: 'work', slot: 'work' },
+    { label: t('cv.education'), value: 'education', slot: 'education' },
+    { label: t('cv.skills'), value: 'skills', slot: 'skills' },
+    { label: t('cv.languages'), value: 'languages', slot: 'languages' },
+    { label: t('cv.certifications'), value: 'certifications', slot: 'certifications' },
+    { label: t('cv.projects'), value: 'projects', slot: 'projects' },
+])
 </script>

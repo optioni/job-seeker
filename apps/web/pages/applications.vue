@@ -4,7 +4,7 @@
             class="text-3xl font-semibold italic mb-6"
             style="font-family: var(--font-display); color: var(--color-text-default)"
         >
-            Applications
+            {{ $t('applications.title') }}
         </h1>
 
         <p v-if="loadError"
@@ -22,7 +22,7 @@
                 class="text-sm p-6"
                 style="color: var(--color-text-faint)"
             >
-                No applications yet.
+                {{ $t('applications.empty') }}
             </p>
 
             <UTable
@@ -60,7 +60,7 @@
                         variant="soft"
                         size="xs"
                     >
-                        {{ row.matched ? 'Yes' : 'No' }}
+                        {{ row.matched ? $t('applications.yes') : $t('applications.no') }}
                     </UBadge>
                 </template>
 
@@ -79,7 +79,7 @@
                         trailing-icon="i-lucide-chevron-right"
                         @click="openDetail(row)"
                     >
-                        Details
+                        {{ $t('applications.details') }}
                     </UButton>
                 </template>
             </UTable>
@@ -111,7 +111,7 @@
                 >
                     <p class="text-xs font-semibold uppercase tracking-widest mb-2"
                         style="color: var(--color-text-faint)">
-                        Match Rationale
+                        {{ $t('applications.matchRationale') }}
                     </p>
 
                     <p class="text-sm leading-relaxed"
@@ -144,7 +144,7 @@
                 <p v-else
                     class="text-sm"
                     style="color: var(--color-text-faint)">
-                    No content available.
+                    {{ $t('applications.noContent') }}
                 </p>
             </template>
         </USlideover>
@@ -155,6 +155,7 @@
 definePageMeta({ layout: 'default' })
 
 const { apiFetch } = useApi()
+const { t, locale } = useI18n()
 
 interface JobApplication {
     id: string
@@ -181,7 +182,7 @@ onMounted(async () => {
         const data = await apiFetch<JobApplication[]>('/applications')
         applications.value = data
     } catch {
-        loadError.value = 'Failed to load applications'
+        loadError.value = t('applications.failedToLoad')
     }
 })
 
@@ -193,7 +194,7 @@ function openDetail(app: JobApplication) {
 
 function formatDate(dateStr: string | null) {
     if (!dateStr) return '—'
-    return new Date(dateStr).toLocaleDateString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return new Date(dateStr).toLocaleDateString(locale.value, { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function scoreColorClass(score: number) {
@@ -204,18 +205,18 @@ function scoreColorClass(score: number) {
 
 const tabItems = computed(() => {
     const tabs = []
-    if (selectedApp.value?.tailoredCvSnapshot) tabs.push({ label: 'Tailored CV', value: 'cv' })
-    if (selectedApp.value?.coverLetterText) tabs.push({ label: 'Cover Letter', value: 'letter' })
+    if (selectedApp.value?.tailoredCvSnapshot) tabs.push({ label: t('applications.tailoredCv'), value: 'cv' })
+    if (selectedApp.value?.coverLetterText) tabs.push({ label: t('applications.coverLetter'), value: 'letter' })
     return tabs
 })
 
-const columns = [
-    { key: 'jobTitle', label: 'Job' },
-    { key: 'company', label: 'Company' },
-    { key: 'matchScore', label: 'Score' },
-    { key: 'matched', label: 'Matched' },
-    { key: 'emailedAt', label: 'Emailed' },
-    { key: 'createdAt', label: 'Date' },
+const columns = computed(() => [
+    { key: 'jobTitle', label: t('applications.colJob') },
+    { key: 'company', label: t('applications.colCompany') },
+    { key: 'matchScore', label: t('applications.colScore') },
+    { key: 'matched', label: t('applications.colMatched') },
+    { key: 'emailedAt', label: t('applications.colEmailed') },
+    { key: 'createdAt', label: t('applications.colDate') },
     { key: 'actions', label: '' },
-]
+])
 </script>

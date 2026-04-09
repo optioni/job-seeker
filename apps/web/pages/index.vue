@@ -29,11 +29,11 @@
                         class="text-4xl font-semibold italic leading-tight"
                         style="font-family: var(--font-display); color: var(--color-text-default)"
                     >
-                        <template v-if="data.newMatchesToday === 0">No new matches today.</template>
+                        <template v-if="data.newMatchesToday === 0">{{ $t('dashboard.noNewMatches') }}</template>
 
                         <template v-else>
                             <span style="color: var(--color-accent)">{{ data.newMatchesToday }}</span>
-                            new match{{ data.newMatchesToday !== 1 ? 'es' : '' }} since yesterday.
+                            {{ data.newMatchesToday !== 1 ? $t('dashboard.newMatchesPlural') : $t('dashboard.newMatchesSingular') }}
                         </template>
                     </h1>
                 </div>
@@ -46,7 +46,7 @@
                     <div class="text-center">
                         <p class="text-xs font-medium uppercase tracking-wider mb-0.5"
                             style="color: var(--color-text-faint)">
-                            Evaluated
+                            {{ $t('dashboard.evaluated') }}
                         </p>
 
                         <p class="text-2xl font-semibold"
@@ -63,7 +63,7 @@
                     <div class="text-center">
                         <p class="text-xs font-medium uppercase tracking-wider mb-0.5"
                             style="color: var(--color-text-faint)">
-                            Matched
+                            {{ $t('dashboard.matched') }}
                         </p>
 
                         <p class="text-2xl font-semibold"
@@ -80,7 +80,7 @@
                     <div class="text-center">
                         <p class="text-xs font-medium uppercase tracking-wider mb-0.5"
                             style="color: var(--color-text-faint)">
-                            Avg Score
+                            {{ $t('dashboard.avgScore') }}
                         </p>
 
                         <p class="text-2xl font-semibold"
@@ -97,7 +97,7 @@
                     <div class="text-center">
                         <p class="text-xs font-medium uppercase tracking-wider mb-0.5"
                             style="color: var(--color-text-faint)">
-                            Digests
+                            {{ $t('dashboard.digests') }}
                         </p>
 
                         <p class="text-2xl font-semibold"
@@ -105,7 +105,7 @@
                             {{ data.thisWeek.digestsSent }}
                         </p>
 
-                        <p class="text-xs mt-0.5 text-[var(--color-text-faint)]">this week</p>
+                        <p class="text-xs mt-0.5 text-[var(--color-text-faint)]">{{ $t('dashboard.thisWeek') }}</p>
                     </div>
                 </div>
             </div>
@@ -129,7 +129,7 @@
                         >{{ data.bestMatch.matchScore }}%</span>
 
                         <span class="text-[10px] uppercase tracking-widest mt-0.5"
-                            style="color: var(--color-text-faint)">match</span>
+                            style="color: var(--color-text-faint)">{{ $t('dashboard.match') }}</span>
                     </div>
 
                     <!-- Content -->
@@ -138,7 +138,7 @@
                             <UBadge color="primary"
                                 variant="soft"
                                 size="xs">
-                                Best match
+                                {{ $t('dashboard.bestMatch') }}
                             </UBadge>
                         </div>
 
@@ -167,7 +167,7 @@
                                 color="primary"
                                 variant="solid"
                             >
-                                View full application
+                                {{ $t('dashboard.viewFullApplication') }}
                             </UButton>
 
                             <UButton
@@ -179,7 +179,7 @@
                                 variant="outline"
                                 trailing-icon="i-lucide-external-link"
                             >
-                                Open listing
+                                {{ $t('dashboard.openListing') }}
                             </UButton>
                         </div>
                     </div>
@@ -192,7 +192,7 @@
                     class="text-sm font-semibold uppercase tracking-widest mb-3"
                     style="color: var(--color-text-faint)"
                 >
-                    Also new today
+                    {{ $t('dashboard.alsoNewToday') }}
                 </h3>
 
                 <div class="grid grid-cols-3 gap-4 mb-8">
@@ -206,7 +206,7 @@
                             <UBadge color="primary"
                                 variant="soft"
                                 size="xs">
-                                New
+                                {{ $t('dashboard.new') }}
                             </UBadge>
 
                             <span
@@ -239,7 +239,7 @@
             >
                 <p class="text-sm"
                     style="color: var(--color-text-faint)">
-                    No new matches in the last 24 hours. Check back after the next pipeline run.
+                    {{ $t('dashboard.emptyState') }}
                 </p>
             </div>
         </div>
@@ -250,15 +250,16 @@
 definePageMeta({ layout: 'default' })
 
 const { data, pending, error, fetch } = useDashboard()
+const { locale } = useI18n()
 
 onMounted(() => fetch())
 
-const today = new Date().toLocaleDateString('en-GB', {
+const today = computed(() => new Date().toLocaleDateString(locale.value, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-})
+}))
 
 function scoreClass(score: number): string {
     if (score >= 80) return 'text-[var(--color-success)]'

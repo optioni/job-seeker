@@ -4,7 +4,7 @@
             class="text-3xl font-semibold italic mb-6"
             style="font-family: var(--font-display); color: var(--color-text-default)"
         >
-            Job Sources
+            {{ $t('sources.title') }}
         </h1>
 
         <p v-if="loadError"
@@ -20,7 +20,7 @@
         >
             <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
                 style="color: var(--color-text-faint)">
-                Available Job Boards
+                {{ $t('sources.availableBoards') }}
             </h2>
 
             <div class="grid grid-cols-3 gap-4">
@@ -54,7 +54,7 @@
                         size="sm"
                         @click="openAddModal(preset)"
                     >
-                        Add Source
+                        {{ $t('sources.addSource') }}
                     </UButton>
                 </div>
             </div>
@@ -67,7 +67,7 @@
         >
             <h2 class="text-sm font-semibold uppercase tracking-widest mb-4"
                 style="color: var(--color-text-faint)">
-                My Sources
+                {{ $t('sources.mySources') }}
             </h2>
 
             <p
@@ -75,7 +75,7 @@
                 class="text-sm"
                 style="color: var(--color-text-faint)"
             >
-                No sources configured yet. Add one from the list above.
+                {{ $t('sources.empty') }}
             </p>
 
             <div v-else
@@ -94,7 +94,7 @@
 
                         <p class="text-xs mt-0.5"
                             style="color: var(--color-text-faint)">
-                            Every {{ source.pollingInterval }} min · {{ source.language.toUpperCase() }}
+                            {{ $t('sources.pollingInterval', { minutes: source.pollingInterval, language: source.language.toUpperCase() }) }}
                         </p>
                     </div>
 
@@ -102,7 +102,7 @@
                         <UBadge :color="source.active ? 'success' : 'error'"
                             variant="soft"
                             size="sm">
-                            {{ source.active ? 'Active' : 'Paused' }}
+                            {{ source.active ? $t('sources.active') : $t('sources.paused') }}
                         </UBadge>
 
                         <UButton
@@ -111,7 +111,7 @@
                             size="xs"
                             @click="toggleActive(source)"
                         >
-                            {{ source.active ? 'Pause' : 'Activate' }}
+                            {{ source.active ? $t('sources.pause') : $t('sources.activate') }}
                         </UButton>
 
                         <UButton
@@ -120,7 +120,7 @@
                             size="xs"
                             @click="deleteSource(source.id)"
                         >
-                            Delete
+                            {{ $t('common.delete') }}
                         </UButton>
                     </div>
                 </div>
@@ -130,11 +130,11 @@
         <!-- Add Source Modal -->
         <UModal
             v-model:open="showAddModal"
-            :title="`Add Source: ${selectedPreset?.name ?? ''}`"
+            :title="$t('sources.addSourceModal', { name: selectedPreset?.name ?? '' })"
         >
             <template #body>
                 <div class="space-y-4">
-                    <UFormField label="Language"
+                    <UFormField :label="$t('sources.languageLabel')"
                         name="language">
                         <USelect
                             v-model="addForm.language"
@@ -145,7 +145,7 @@
                         />
                     </UFormField>
 
-                    <UFormField label="Polling Interval (minutes)"
+                    <UFormField :label="$t('sources.pollingIntervalLabel')"
                         name="pollingInterval">
                         <UInput
                             v-model.number="addForm.pollingInterval"
@@ -159,7 +159,7 @@
                     <template v-if="selectedPreset?.filterConfig?.length">
                         <p class="text-xs font-semibold uppercase tracking-widest"
                             style="color: var(--color-text-faint)">
-                            Filters
+                            {{ $t('sources.filters') }}
                         </p>
 
                         <UFormField
@@ -189,14 +189,14 @@
                 <UButton color="neutral"
                     variant="ghost"
                     @click="showAddModal = false">
-                    Cancel
+                    {{ $t('common.cancel') }}
                 </UButton>
 
                 <UButton color="primary"
                     variant="solid"
                     :loading="adding"
                     @click="addSource">
-                    Add Source
+                    {{ $t('sources.addSource') }}
                 </UButton>
             </template>
         </UModal>
@@ -207,6 +207,7 @@
 definePageMeta({ layout: 'default' })
 
 const { apiFetch } = useApi()
+const { t } = useI18n()
 
 interface FilterConfigField {
     key: string
@@ -258,7 +259,7 @@ onMounted(async () => {
         presets.value = presetsData
         sources.value = sourcesData
     } catch {
-        loadError.value = 'Failed to load data'
+        loadError.value = t('sources.failedToLoad')
     }
 })
 
@@ -291,7 +292,7 @@ async function addSource() {
         showAddModal.value = false
         selectedPreset.value = null
     } catch {
-        addError.value = 'Failed to add source'
+        addError.value = t('sources.failedToAdd')
     } finally {
         adding.value = false
     }
@@ -319,9 +320,9 @@ async function deleteSource(id: string) {
     }
 }
 
-const languageOptions = [
-    { label: 'Finnish', value: 'fi' },
-    { label: 'English', value: 'en' },
-    { label: 'Swedish', value: 'sv' },
-]
+const languageOptions = computed(() => [
+    { label: t('preferences.languageFinnish'), value: 'fi' },
+    { label: t('preferences.languageEnglish'), value: 'en' },
+    { label: t('preferences.languageSwedish'), value: 'sv' },
+])
 </script>

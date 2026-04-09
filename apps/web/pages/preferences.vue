@@ -4,7 +4,7 @@
             class="text-3xl font-semibold italic mb-6"
             style="font-family: var(--font-display); color: var(--color-text-default)"
         >
-            Job Preferences
+            {{ $t('preferences.title') }}
         </h1>
 
         <div
@@ -12,7 +12,7 @@
             style="background-color: var(--color-card); border-color: var(--color-border)"
         >
             <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Target Role"
+                <UFormField :label="$t('preferences.roleLabel')"
                     name="role">
                     <UInput
                         v-model="prefs.role"
@@ -22,7 +22,7 @@
                     />
                 </UFormField>
 
-                <UFormField label="Seniority"
+                <UFormField :label="$t('preferences.seniorityLabel')"
                     name="seniority">
                     <USelect
                         v-model="prefs.seniority"
@@ -33,28 +33,31 @@
                     />
                 </UFormField>
 
-                <UFormField label="Locations (comma-separated)"
-                    name="locations">
+                <UFormField :label="$t('preferences.locationsLabel')"
+                    name="locations"
+                    :hint="$t('preferences.commaSeparated')">
                     <UInput
                         v-model="locationsInput"
                         type="text"
-                        placeholder="e.g. Helsinki, Espoo, Remote"
+                        placeholder="Helsinki, Espoo, Remote"
                         class="w-full"
                     />
                 </UFormField>
 
-                <UFormField label="Industries (comma-separated)"
-                    name="industries">
+                <UFormField :label="$t('preferences.industriesLabel')"
+                    name="industries"
+                    :hint="$t('preferences.commaSeparated')">
                     <UInput
                         v-model="industriesInput"
                         type="text"
-                        placeholder="e.g. Technology, Finance"
+                        placeholder="Technology, Finance"
                         class="w-full"
                     />
                 </UFormField>
 
-                <UFormField label="Minimum Salary (€/year)"
-                    name="salaryMin">
+                <UFormField :label="$t('preferences.salaryMinLabel')"
+                    name="salaryMin"
+                    :hint="$t('preferences.euroPerYear')">
                     <UInput
                         v-model.number="prefs.salaryMin"
                         type="number"
@@ -64,8 +67,9 @@
                     />
                 </UFormField>
 
-                <UFormField label="Maximum Salary (€/year)"
-                    name="salaryMax">
+                <UFormField :label="$t('preferences.salaryMaxLabel')"
+                    name="salaryMax"
+                    :hint="$t('preferences.euroPerYear')">
                     <UInput
                         v-model.number="prefs.salaryMax"
                         type="number"
@@ -75,7 +79,7 @@
                     />
                 </UFormField>
 
-                <UFormField label="Default Language"
+                <UFormField :label="$t('preferences.defaultLanguageLabel')"
                     name="defaultLanguage">
                     <USelect
                         v-model="prefs.defaultLanguage"
@@ -95,7 +99,7 @@
                     :loading="saving"
                     @click="save"
                 >
-                    Save Preferences
+                    {{ $t('preferences.saveButton') }}
                 </UButton>
 
                 <span
@@ -112,6 +116,7 @@
 definePageMeta({ layout: 'default' })
 
 const { apiFetch } = useApi()
+const { t } = useI18n()
 
 interface JobPreferences {
     id?: string
@@ -127,7 +132,7 @@ interface JobPreferences {
 const prefs = ref<JobPreferences>({
     locations: [],
     role: '',
-    seniority: '',
+    seniority: 'any',
     salaryMin: null,
     salaryMax: null,
     industries: [],
@@ -143,11 +148,13 @@ const industriesInput = ref('')
 
 onMounted(async () => {
     try {
-        const data = await apiFetch<JobPreferences>('/preferences')
-        prefsId.value = data.id ?? null
-        prefs.value = data
-        locationsInput.value = (data.locations ?? []).join(', ')
-        industriesInput.value = (data.industries ?? []).join(', ')
+        const data = await apiFetch<JobPreferences | null>('/preferences')
+        if (data) {
+            prefsId.value = data.id ?? null
+            prefs.value = { ...data, seniority: data.seniority || 'any' }
+            locationsInput.value = (data.locations ?? []).join(', ')
+            industriesInput.value = (data.industries ?? []).join(', ')
+        }
     } catch (e: unknown) {
         const status = (e as { response?: { status?: number } })?.response?.status
         if (status !== 404) console.error('Failed to load preferences')
@@ -162,30 +169,32 @@ async function save() {
     prefs.value.industries = industriesInput.value.split(',').map((s) => s.trim()).filter(Boolean)
     try {
         const method = prefsId.value ? 'PATCH' : 'POST'
-        const path = prefsId.value ? `/preferences/${prefsId.value}` : '/preferences'
-        const data = await apiFetch<JobPreferences>(path, { method, body: prefs.value })
+        const path = '/preferences'
+        const body = { ...prefs.value, seniority: prefs.value.seniority === 'any' ? '' : prefs.value.seniority }
+        const data = await apiFetch<JobPreferences>(path, { method, body })
         prefsId.value = data.id ?? null
-        saveMessage.value = 'Saved!'
+        prefs.value = { ...data, seniority: data.seniority || 'any' }
+        saveMessage.value = t('common.saved')
     } catch {
-        saveMessage.value = 'Save failed'
+        saveMessage.value = t('common.saveFailed')
         saveFailed.value = true
     } finally {
         saving.value = false
     }
 }
 
-const seniorityOptions = [
-    { label: 'Any', value: '' },
-    { label: 'Junior', value: 'junior' },
-    { label: 'Mid-level', value: 'mid' },
-    { label: 'Senior', value: 'senior' },
-    { label: 'Lead', value: 'lead' },
-    { label: 'Principal', value: 'principal' },
-]
+const seniorityOptions = computed(() => [
+    { label: t('preferences.seniorityAny'), value: 'any' },
+    { label: t('preferences.seniorityJunior'), value: 'junior' },
+    { label: t('preferences.seniorityMid'), value: 'mid' },
+    { label: t('preferences.senioritySenior'), value: 'senior' },
+    { label: t('preferences.seniorityLead'), value: 'lead' },
+    { label: t('preferences.seniorityPrincipal'), value: 'principal' },
+])
 
-const languageOptions = [
-    { label: 'Finnish', value: 'fi' },
-    { label: 'English', value: 'en' },
-    { label: 'Swedish', value: 'sv' },
-]
+const languageOptions = computed(() => [
+    { label: t('preferences.languageFinnish'), value: 'fi' },
+    { label: t('preferences.languageEnglish'), value: 'en' },
+    { label: t('preferences.languageSwedish'), value: 'sv' },
+])
 </script>

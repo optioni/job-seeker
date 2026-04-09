@@ -19,7 +19,7 @@
 
         <UForm :state="{ email, password }"
             @submit="handleSubmit">
-            <UFormField label="Email"
+            <UFormField :label="$t('login.emailLabel')"
                 name="email"
                 class="mb-4">
                 <UInput
@@ -32,7 +32,7 @@
                 />
             </UFormField>
 
-            <UFormField label="Password"
+            <UFormField :label="$t('login.passwordLabel')"
                 name="password"
                 class="mb-6">
                 <UInput
@@ -58,17 +58,17 @@
                 class="w-full justify-center"
                 :loading="loading"
             >
-                Sign In
+                {{ $t('login.signIn') }}
             </UButton>
         </UForm>
 
         <p class="text-sm mt-6 text-center"
             style="color: var(--color-text-muted)">
-            Don't have an account?
+            {{ $t('login.noAccount') }}
             <NuxtLink to="/register"
                 class="font-medium"
                 style="color: var(--color-accent)">
-                Register
+                {{ $t('login.register') }}
             </NuxtLink>
         </p>
     </div>
@@ -78,6 +78,7 @@
 definePageMeta({ layout: 'auth', middleware: [] })
 
 const { login } = useAuth()
+const { t } = useI18n()
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -90,7 +91,7 @@ async function handleSubmit() {
         await login(email.value, password.value)
         await navigateTo('/')
     } catch {
-        error.value = 'Invalid email or password'
+        error.value = t('login.invalidCredentials')
     } finally {
         loading.value = false
     }

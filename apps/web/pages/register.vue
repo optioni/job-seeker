@@ -13,13 +13,13 @@
                 class="text-3xl italic font-semibold"
                 style="font-family: var(--font-display); color: var(--color-text-default)"
             >
-                Create Account
+                {{ $t('register.title') }}
             </h1>
         </div>
 
         <UForm :state="{ email, password }"
             @submit="handleSubmit">
-            <UFormField label="Email"
+            <UFormField :label="$t('register.emailLabel')"
                 name="email"
                 class="mb-4">
                 <UInput
@@ -32,7 +32,7 @@
                 />
             </UFormField>
 
-            <UFormField label="Password"
+            <UFormField :label="$t('register.passwordLabel')"
                 name="password"
                 class="mb-6">
                 <UInput
@@ -58,17 +58,17 @@
                 class="w-full justify-center"
                 :loading="loading"
             >
-                Create Account
+                {{ $t('register.submit') }}
             </UButton>
         </UForm>
 
         <p class="text-sm mt-6 text-center"
             style="color: var(--color-text-muted)">
-            Already have an account?
+            {{ $t('register.alreadyHaveAccount') }}
             <NuxtLink to="/login"
                 class="font-medium"
                 style="color: var(--color-accent)">
-                Sign In
+                {{ $t('register.signIn') }}
             </NuxtLink>
         </p>
     </div>
@@ -78,6 +78,7 @@
 definePageMeta({ layout: 'auth', middleware: [] })
 
 const { register } = useAuth()
+const { t } = useI18n()
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -91,9 +92,9 @@ async function handleSubmit() {
         await navigateTo('/')
     } catch (e: unknown) {
         const status = (e as { response?: { status?: number } })?.response?.status
-        if (status === 409) error.value = 'Email already registered'
-        else if (status === 403) error.value = 'Registration is not available'
-        else error.value = 'Registration failed. Please try again.'
+        if (status === 409) error.value = t('register.emailAlreadyRegistered')
+        else if (status === 403) error.value = t('register.registrationNotAvailable')
+        else error.value = t('register.registrationFailed')
     } finally {
         loading.value = false
     }
