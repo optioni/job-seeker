@@ -31,9 +31,48 @@
     --color-warning: #b45309;
     --color-warning-tint: #fef3c7;
 
+    /* Dot grid texture */
+    --color-dot-grid: #c8c0b4;
+
+    /* Nav active link */
+    --color-nav-active-bg: #1c1917;
+    --color-nav-active-text: #faf8f4;
+
     /* Typography */
     --font-display: 'Fraunces', Georgia, serif;
     --font-sans: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
+/* Dark mode token overrides — warm charcoal palette */
+.dark {
+    --color-background: #0c0a09;
+    --color-card: #1c1917;
+    --color-border: #292524;
+    --color-border-strong: #44403c;
+    --color-text-default: #faf8f4;
+    --color-text-muted: #a8a29e;
+    --color-text-faint: #78716c;
+    --color-accent: #be123c;
+    --color-accent-tint: #4c0519;
+    --color-success: #4ade80;
+    --color-success-tint: #14532d;
+    --color-error: #fb923c;
+    --color-error-tint: #431407;
+    --color-warning: #fbbf24;
+    --color-warning-tint: #451a03;
+    --color-dot-grid: #292524;
+    --color-nav-active-bg: #f5f1eb;
+    --color-nav-active-text: #1c1917;
+}
+
+/* Pin primary to rose-800 = brand burgundy (#9f1239) */
+:root {
+    --ui-primary: var(--ui-color-primary-800);
+}
+
+/* Lift primary to rose-400 in dark mode so button text (--ui-bg) has contrast */
+.dark {
+    --ui-primary: var(--ui-color-primary-400);
 }
 
 html {
@@ -51,7 +90,7 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image: radial-gradient(circle, #c8c0b4 1px, transparent 1px);
+    background-image: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px);
     background-size: 28px 28px;
     opacity: 0.35;
     pointer-events: none;
