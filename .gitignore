@@ -30,3 +30,7 @@ build
 
 # Superpowers
 .superpowers
+
+# Playwright
+playwright-report
+.playwright-mcp
