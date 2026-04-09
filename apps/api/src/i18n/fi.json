@@ -1,0 +1,17 @@
+{
+    "cv": {
+        "summary": "Yhteenveto",
+        "workExperience": "Työkokemus",
+        "education": "Koulutus",
+        "skills": "Taidot",
+        "languages": "Kielet",
+        "certifications": "Sertifikaatit",
+        "projects": "Projektit"
+    },
+    "email": {
+        "subject": "Työnhaun yhteenveto — {count} hakemusta",
+        "greeting": "Työnhaun yhteenveto",
+        "matchScore": "Osuvuuspistemäärä",
+        "viewApplication": "Katso ilmoitus"
+    }
+}

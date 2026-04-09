@@ -1,0 +1,17 @@
+{
+    "cv": {
+        "summary": "Summary",
+        "workExperience": "Work Experience",
+        "education": "Education",
+        "skills": "Skills",
+        "languages": "Languages",
+        "certifications": "Certifications",
+        "projects": "Projects"
+    },
+    "email": {
+        "subject": "Job Application Digest — {count} match(es)",
+        "greeting": "Job Application Digest",
+        "matchScore": "Match score",
+        "viewApplication": "View listing"
+    }
+}

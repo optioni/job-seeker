@@ -9,6 +9,7 @@ import FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
 import { firstValueFrom } from 'rxjs';
+import { I18nService } from 'nestjs-i18n';
 
 import { JobApplication } from '../entities/job-application.entity';
 
@@ -26,6 +27,7 @@ export class DocumentProcessor {
         private readonly em: EntityManager,
         private readonly httpService: HttpService,
         private readonly config: ConfigService,
+        private readonly i18n: I18nService,
         @InjectQueue('notification') private readonly notificationQueue: Queue,
     ) {
         this.gotenbergUrl = this.config.get<string>('GOTENBERG_URL')!;
@@ -40,13 +42,15 @@ export class DocumentProcessor {
         const { applicationId } = job.data;
 
         const application = await em.findOneOrFail(JobApplication, applicationId, {
-            populate: ['listing', 'listing.source'] as const,
+            populate: ['listing', 'listing.source', 'listing.source.user', 'listing.source.user.jobPreferences'] as const,
         });
+
+        const lang = application.listing.source.user.jobPreferences?.defaultLanguage ?? 'en';
 
         const cv = application.tailoredCvSnapshot ?? null;
         const coverLetterText = application.coverLetterText ?? '';
 
-        const cvHtml = this.renderCvTemplate(cv);
+        const cvHtml = await this.renderCvTemplate(cv, lang);
         const coverLetterHtml = this.coverLetterTemplate.replace(
             '{{coverLetterText}}',
             coverLetterText,
@@ -66,10 +70,28 @@ export class DocumentProcessor {
         );
     }
 
-    private renderCvTemplate(cv: Record<string, unknown> | null): string {
+    private async renderCvTemplate(cv: Record<string, unknown> | null, lang: string): Promise<string> {
         if (!cv) {
             return '<html><body><p>No CV data available.</p></body></html>';
         }
+
+        const [
+            labelSummary,
+            labelWorkExperience,
+            labelEducation,
+            labelSkills,
+            labelLanguages,
+            labelCertifications,
+            labelProjects,
+        ] = await Promise.all([
+            this.i18n.translate('cv.summary', { lang }),
+            this.i18n.translate('cv.workExperience', { lang }),
+            this.i18n.translate('cv.education', { lang }),
+            this.i18n.translate('cv.skills', { lang }),
+            this.i18n.translate('cv.languages', { lang }),
+            this.i18n.translate('cv.certifications', { lang }),
+            this.i18n.translate('cv.projects', { lang }),
+        ]);
 
         const personal = (cv['personalInfo'] as Record<string, string>) ?? {};
         const workExperiences = (cv['workExperiences'] as Array<Record<string, unknown>>) ?? [];
@@ -133,6 +155,13 @@ export class DocumentProcessor {
             .join('');
 
         return this.cvTemplate
+            .replace('{{labelSummary}}', labelSummary)
+            .replace('{{labelWorkExperience}}', labelWorkExperience)
+            .replace('{{labelEducation}}', labelEducation)
+            .replace('{{labelSkills}}', labelSkills)
+            .replace('{{labelLanguages}}', labelLanguages)
+            .replace('{{labelCertifications}}', labelCertifications)
+            .replace('{{labelProjects}}', labelProjects)
             .replace('{{firstName}}', personal['firstName'] ?? '')
             .replace('{{lastName}}', personal['lastName'] ?? '')
             .replace('{{email}}', personal['email'] ?? '')

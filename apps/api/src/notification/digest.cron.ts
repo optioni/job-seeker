@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as nodemailer from 'nodemailer';
 import * as path from 'path';
 import { firstValueFrom } from 'rxjs';
+import { I18nService } from 'nestjs-i18n';
 
 import { JobApplication } from '../entities/job-application.entity';
 
@@ -23,6 +24,7 @@ export class DigestCron {
         private readonly em: EntityManager,
         private readonly httpService: HttpService,
         private readonly config: ConfigService,
+        private readonly i18n: I18nService,
     ) {
         const templatesDirectory = path.join(__dirname, '..', 'document', 'templates');
         this.cvTemplate = fs.readFileSync(path.join(templatesDirectory, 'cv.html'), 'utf8');
@@ -35,7 +37,7 @@ export class DigestCron {
         const applications = await em.find(
             JobApplication,
             { matched: true, emailedAt: null },
-            { populate: ['listing', 'listing.source', 'listing.source.user'] as const },
+            { populate: ['listing', 'listing.source', 'listing.source.user', 'listing.source.user.jobPreferences'] as const },
         );
 
         if (applications.length === 0) {
@@ -66,16 +68,25 @@ export class DigestCron {
 
         for (const [, userApps] of byUser) {
             const recipient = userApps[0].listing.source.user.email;
+            const lang = userApps[0].listing.source.user.jobPreferences?.defaultLanguage ?? 'en';
+
+            const [greeting, matchScoreLabel, viewApplicationLabel, subject] = await Promise.all([
+                this.i18n.translate('email.greeting', { lang }),
+                this.i18n.translate('email.matchScore', { lang }),
+                this.i18n.translate('email.viewApplication', { lang }),
+                this.i18n.translate('email.subject', { lang, args: { count: userApps.length } }),
+            ]);
+
             const attachments: Array<{ filename: string; content: Buffer }> = [];
-            const bodyLines: string[] = [`<h2>Job Application Digest — ${new Date().toDateString()}</h2>`];
+            const bodyLines: string[] = [`<h2>${greeting} — ${new Date().toDateString()}</h2>`];
 
             for (const app of userApps) {
                 const listing = app.listing;
                 bodyLines.push(`
                     <h3>${listing.title} at ${listing.company}</h3>
-                    <p>Match score: ${app.matchScore ?? 'N/A'}</p>
+                    <p>${matchScoreLabel}: ${app.matchScore ?? 'N/A'}</p>
                     <p>Rationale: ${app.matchRationale ?? 'N/A'}</p>
-                    <p><a href="${listing.url}">View listing</a></p>
+                    <p><a href="${listing.url}">${viewApplicationLabel}</a></p>
                 `);
 
                 if (app.tailoredCvSnapshot) {
@@ -97,7 +108,7 @@ export class DigestCron {
             await transporter.sendMail({
                 from: this.config.get<string>('SMTP_FROM'),
                 to: recipient,
-                subject: `Job Application Digest — ${userApps.length} match(es)`,
+                subject,
                 html: bodyLines.join(''),
                 attachments,
             });

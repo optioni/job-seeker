@@ -6,6 +6,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import * as path from 'path';
+import { I18nModule } from 'nestjs-i18n';
 
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
@@ -48,6 +50,14 @@ import { PreferencesModule } from './preferences/preferences.module';
             }),
         }),
         ScheduleModule.forRoot(),
+        I18nModule.forRoot({
+            fallbackLanguage: 'en',
+            loaderOptions: {
+                path: path.join(__dirname, 'i18n/'),
+                watch: false,
+            },
+            resolvers: [],
+        }),
         AuthModule,
         CvModule,
         PreferencesModule,

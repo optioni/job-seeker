@@ -6,7 +6,8 @@
         "builder": "swc",
         "deleteOutDir": true,
         "assets": [
-            { "include": "document/templates/**/*", "watchAssets": true }
+            { "include": "document/templates/**/*", "watchAssets": true },
+            { "include": "i18n/**/*", "watchAssets": true }
         ]
     }
 }
