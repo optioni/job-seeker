@@ -37,7 +37,6 @@ const mockApplication = {
         description: 'A great job',
         source: {
             user: { id: 'user-1' },
-            language: null,
         },
     },
     tailoredCvSnapshot: null as Record<string, unknown> | null,

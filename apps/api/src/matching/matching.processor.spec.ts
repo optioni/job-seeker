@@ -24,7 +24,6 @@ const mockListing = {
     description: 'Develop great software',
     source: {
         user: { id: 'user-1' },
-        language: null,
     },
 };
 
@@ -118,15 +117,15 @@ describe('MatchingProcessor', () => {
         expect(mockGenerationQueue.add).not.toHaveBeenCalled();
     });
 
-    it('includes Finnish language instruction when source.language is fi', async () => {
+    it('includes Finnish language instruction when preferences.defaultLanguage is fi', async () => {
         const { generateObject } = await import('ai');
         vi.mocked(generateObject).mockResolvedValue({
             object: { match: true, score: 90, rationale: 'Perfect' },
         } as Awaited<ReturnType<typeof generateObject>>);
 
-        mockForkedEm.findOneOrFail.mockResolvedValue({
-            ...mockListing,
-            source: { user: { id: 'user-1' }, language: 'fi' },
+        mockForkedEm.findOne.mockImplementation((entity: unknown) => {
+            if (String(entity).includes('CvProfile')) return Promise.resolve(mockCvProfile);
+            return Promise.resolve({ defaultLanguage: 'fi' });
         });
 
         const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;
@@ -136,15 +135,15 @@ describe('MatchingProcessor', () => {
         expect(callArgs.prompt).toContain('Respond in Finnish.');
     });
 
-    it('includes English language instruction when source.language is en', async () => {
+    it('includes English language instruction when preferences.defaultLanguage is en', async () => {
         const { generateObject } = await import('ai');
         vi.mocked(generateObject).mockResolvedValue({
             object: { match: true, score: 80, rationale: 'Good' },
         } as Awaited<ReturnType<typeof generateObject>>);
 
-        mockForkedEm.findOneOrFail.mockResolvedValue({
-            ...mockListing,
-            source: { user: { id: 'user-1' }, language: 'en' },
+        mockForkedEm.findOne.mockImplementation((entity: unknown) => {
+            if (String(entity).includes('CvProfile')) return Promise.resolve(mockCvProfile);
+            return Promise.resolve({ defaultLanguage: 'en' });
         });
 
         const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;

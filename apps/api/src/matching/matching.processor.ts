@@ -47,7 +47,7 @@ export class MatchingProcessor {
 
         const preferences = await em.findOne(JobPreferences, { user: userId });
 
-        const language = listing.source.language ?? preferences?.defaultLanguage ?? 'fi';
+        const language = preferences?.defaultLanguage ?? 'fi';
         const languageInstruction = language === 'fi'
             ? 'Respond in Finnish.'
             : 'Respond in English.';

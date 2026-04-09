@@ -18,17 +18,11 @@ export class JobSource {
     @ManyToOne(() => JobSourcePreset)
     preset!: Rel<JobSourcePreset>;
 
-    @Property()
-    label!: string;
+    @Property({ nullable: true })
+    label?: string;
 
     @Property({ type: 'json' })
     filters!: Record<string, string>;
-
-    @Property({ type: 'string', nullable: true })
-    language?: 'fi' | 'en';
-
-    @Property({ columnType: 'int' })
-    pollingInterval!: number;
 
     @Property({ type: 'boolean', default: true })
     active: boolean = true;

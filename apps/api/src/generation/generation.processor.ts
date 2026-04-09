@@ -82,7 +82,7 @@ export class GenerationProcessor {
 
         const preferences = await em.findOne(JobPreferences, { user: userId });
 
-        const language = application.listing.source.language ?? preferences?.defaultLanguage ?? 'fi';
+        const language = preferences?.defaultLanguage ?? 'fi';
         const languageInstruction = language === 'fi'
             ? 'Write your response in Finnish.'
             : 'Write your response in English.';

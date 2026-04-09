@@ -2,50 +2,67 @@
 import { type EntityManager } from '@mikro-orm/postgresql';
 import { Seeder } from '@mikro-orm/seeder';
 
-import { JobSourcePreset } from '../entities/job-source-preset.entity';
+import { type FilterConfigField, JobSourcePreset } from '../entities/job-source-preset.entity';
 
-const presets = [
+const presets: Array<{
+    name: string
+    baseUrl: string
+    filterConfig: FilterConfigField[]
+    defaultLanguage: 'fi' | 'en'
+}> = [
     {
         name: 'TE-palvelut',
         baseUrl: 'https://paikat.te-palvelut.fi/tpt-web/feeds/rss/list',
-        filterConfig: { keyword: 'keyword', location: 'municipality', type: 'employmentType' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 60,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'keyword' },
+            { key: 'location', label: 'Location', type: 'text', urlParam: 'municipality' },
+            { key: 'type', label: 'Employment Type', type: 'text', urlParam: 'employmentType' },
+        ],
+        defaultLanguage: 'fi',
     },
     {
         name: 'Duunitori',
         baseUrl: 'https://duunitori.fi/tyopaikat/rss',
-        filterConfig: { keyword: 'haku', location: 'sijainti' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 60,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'haku' },
+            { key: 'location', label: 'Location', type: 'text', urlParam: 'sijainti' },
+        ],
+        defaultLanguage: 'fi',
     },
     {
         name: 'Oikotie Työpaikat',
         baseUrl: 'https://tyopaikat.oikotie.fi/rss',
-        filterConfig: { keyword: 'q', location: 'location' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 60,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'q' },
+            { key: 'location', label: 'Location', type: 'text', urlParam: 'location' },
+        ],
+        defaultLanguage: 'fi',
     },
     {
         name: 'Indeed Finland',
         baseUrl: 'https://fi.indeed.com/rss',
-        filterConfig: { keyword: 'q', location: 'l' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 120,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'q' },
+            { key: 'location', label: 'Location', type: 'text', urlParam: 'l' },
+        ],
+        defaultLanguage: 'fi',
     },
     {
         name: 'Kuntarekry',
         baseUrl: 'https://www.kuntarekry.fi/fi/rss',
-        filterConfig: { keyword: 'searchText', location: 'municipality' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 60,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'searchText' },
+            { key: 'location', label: 'Location', type: 'text', urlParam: 'municipality' },
+        ],
+        defaultLanguage: 'fi',
     },
     {
         name: 'Valtiolle.fi',
         baseUrl: 'https://www.valtiolle.fi/rss',
-        filterConfig: { keyword: 'keyword' },
-        defaultLanguage: 'fi' as const,
-        defaultPollingInterval: 120,
+        filterConfig: [
+            { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'keyword' },
+        ],
+        defaultLanguage: 'fi',
     },
 ];
 

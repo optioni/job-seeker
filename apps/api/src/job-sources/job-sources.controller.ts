@@ -12,8 +12,7 @@ import {
 
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JobSourcePreset } from '../entities/job-source-preset.entity';
-import { JobSource } from '../entities/job-source.entity';
-import type { CreateJobSourceDto, UpdateJobSourceDto } from './job-sources.service';
+import type { CreateJobSourceDto, JobSourceResponse, UpdateJobSourceDto } from './job-sources.service';
 import { JobSourcesService } from './job-sources.service';
 
 @Controller()
@@ -37,7 +36,7 @@ export class JobSourcesController {
     @Get('job-sources')
     async listSources(
         @CurrentUser() user: { userId: string },
-    ): Promise<JobSource[]> {
+    ): Promise<JobSourceResponse[]> {
         return this.jobSourcesService.listSources(user.userId);
     }
 
@@ -46,7 +45,7 @@ export class JobSourcesController {
     async createSource(
         @CurrentUser() user: { userId: string },
         @Body() body: CreateJobSourceDto,
-    ): Promise<JobSource> {
+    ): Promise<JobSourceResponse> {
         return this.jobSourcesService.createSource(user.userId, body);
     }
 
@@ -55,7 +54,7 @@ export class JobSourcesController {
         @CurrentUser() user: { userId: string },
         @Param('id') id: string,
         @Body() body: UpdateJobSourceDto,
-    ): Promise<JobSource> {
+    ): Promise<JobSourceResponse> {
         return this.jobSourcesService.updateSource(user.userId, id, body);
     }
 

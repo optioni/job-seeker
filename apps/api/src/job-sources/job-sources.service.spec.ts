@@ -14,9 +14,11 @@ const mockPreset = {
     id: 'preset-1',
     name: 'TE-palvelut',
     baseUrl: 'https://feeds.te-palvelut.fi/rss',
-    filterConfig: { keyword: 'q', location: 'location' },
+    filterConfig: [
+        { key: 'keyword', label: 'Keyword', type: 'text', urlParam: 'q' },
+        { key: 'location', label: 'Location', type: 'text', urlParam: 'location' },
+    ],
     defaultLanguage: 'fi',
-    defaultPollingInterval: 60,
 };
 
 const mockSource = {
@@ -41,9 +43,9 @@ const mockSourceRepo = {
 };
 
 const mockEm = {
-    persistAndFlush: vi.fn(),
+    persist: vi.fn(),
     flush: vi.fn(),
-    removeAndFlush: vi.fn(),
+    remove: vi.fn(),
 };
 
 describe('JobSourcesService', () => {
@@ -82,12 +84,30 @@ describe('JobSourcesService', () => {
                 presetId: 'preset-1',
                 label: 'My TE Source',
                 filters: { keyword: 'developer' },
-                pollingInterval: 60,
             });
 
             expect(mockSourceRepo.create).toHaveBeenCalled();
-            expect(mockEm.persistAndFlush).toHaveBeenCalled();
-            expect(result).toBe(mockSource);
+            expect(mockEm.persist).toHaveBeenCalled();
+            expect(mockEm.flush).toHaveBeenCalled();
+            expect(result).toMatchObject({
+                id: mockSource.id,
+                presetId: mockPreset.id,
+                presetName: mockPreset.name,
+                active: mockSource.active,
+                filters: mockSource.filters,
+            });
+        });
+
+        it('creates source without label', async () => {
+            mockPresetRepo.findOne.mockResolvedValue(mockPreset);
+            mockSourceRepo.create.mockReturnValue({ ...mockSource, label: undefined });
+
+            const result = await service.createSource('user-1', {
+                presetId: 'preset-1',
+                filters: { keyword: 'developer' },
+            });
+
+            expect(result).toMatchObject({ presetId: mockPreset.id });
         });
 
         it('throws NotFoundException when preset not found', async () => {
@@ -96,9 +116,7 @@ describe('JobSourcesService', () => {
             await expect(
                 service.createSource('user-1', {
                     presetId: 'nonexistent',
-                    label: 'Test',
                     filters: {},
-                    pollingInterval: 60,
                 }),
             ).rejects.toThrow(NotFoundException);
         });
@@ -109,9 +127,7 @@ describe('JobSourcesService', () => {
             await expect(
                 service.createSource('user-1', {
                     presetId: 'preset-1',
-                    label: 'Test',
                     filters: { invalidKey: 'value' },
-                    pollingInterval: 60,
                 }),
             ).rejects.toThrow(UnprocessableEntityException);
         });

@@ -36,9 +36,9 @@ export class IngestionCron {
     private async pollSource(source: JobSource, em: EntityManager) {
         const urlParameters: Record<string, string> = {};
         for (const [key, value] of Object.entries(source.filters ?? {})) {
-            const urlKey = source.preset.filterConfig[key];
-            if (urlKey) {
-                urlParameters[urlKey] = value;
+            const field = source.preset.filterConfig.find((f) => f.key === key);
+            if (field) {
+                urlParameters[field.urlParam] = value;
             }
         }
 

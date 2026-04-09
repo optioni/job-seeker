@@ -3,6 +3,14 @@ import { Entity, OneToMany, PrimaryKey, Property } from '@mikro-orm/decorators/l
 
 import { JobSource } from './job-source.entity';
 
+export interface FilterConfigField {
+    key: string
+    label: string
+    type: 'text' | 'number'
+    required?: boolean
+    urlParam: string
+}
+
 @Entity({ tableName: 'job_source_presets' })
 export class JobSourcePreset {
     @PrimaryKey({ type: 'uuid' })
@@ -15,13 +23,10 @@ export class JobSourcePreset {
     baseUrl!: string;
 
     @Property({ type: 'json' })
-    filterConfig!: Record<string, string>;
+    filterConfig!: FilterConfigField[];
 
     @Property({ type: 'string' })
     defaultLanguage!: 'fi' | 'en';
-
-    @Property({ columnType: 'int' })
-    defaultPollingInterval!: number;
 
     @OneToMany(() => JobSource, (jobSource) => jobSource.preset)
     jobSources = new Collection<JobSource>(this);
