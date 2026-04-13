@@ -1,8 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JobApplication } from '../entities/job-application.entity';
-import { ApplicationsService } from './applications.service';
+import { ApplicationResponseDto, ApplicationsService } from './applications.service';
 
 @Controller('applications')
 export class ApplicationsController {
@@ -11,7 +10,7 @@ export class ApplicationsController {
     @Get()
     async findAll(
         @CurrentUser() user: { userId: string },
-    ): Promise<JobApplication[]> {
+    ): Promise<ApplicationResponseDto[]> {
         return this.applicationsService.findAll(user.userId);
     }
 
@@ -19,7 +18,7 @@ export class ApplicationsController {
     async findOne(
         @Param('id') id: string,
         @CurrentUser() user: { userId: string },
-    ): Promise<JobApplication> {
+    ): Promise<ApplicationResponseDto> {
         return this.applicationsService.findOne(id, user.userId);
     }
 }

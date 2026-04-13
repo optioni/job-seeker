@@ -12,11 +12,15 @@ const mockApplication = {
     id: 'app-1',
     matched: true,
     matchScore: 90,
+    matchRationale: 'Good fit',
+    tailoredCvSnapshot: undefined,
+    coverLetterText: undefined,
+    emailedAt: undefined,
+    createdAt: new Date(),
     listing: {
         title: 'Developer',
-        source: {
-            user: { id: 'user-1' },
-        },
+        company: 'Acme',
+        url: 'https://example.com/job/1',
         scrapedAt: new Date(),
     },
 };
@@ -42,19 +46,20 @@ describe('ApplicationsService', () => {
     });
 
     describe('findAll', () => {
-        it('queries applications ordered by scrapedAt descending', async () => {
+        it('queries applications by user and ordered by scrapedAt descending', async () => {
             mockEm.find.mockResolvedValue([mockApplication]);
 
             const result = await service.findAll('user-1');
 
             expect(mockEm.find).toHaveBeenCalledWith(
                 JobApplication,
-                { listing: { source: { user: 'user-1' } } },
+                { user: 'user-1' },
                 expect.objectContaining({
                     orderBy: { listing: { scrapedAt: 'DESC' } },
                 }),
             );
-            expect(result).toEqual([mockApplication]);
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('app-1');
         });
 
         it('returns empty array when no applications found', async () => {
@@ -72,7 +77,13 @@ describe('ApplicationsService', () => {
 
             const result = await service.findOne('app-1', 'user-1');
 
-            expect(result).toBe(mockApplication);
+            expect(mockEm.findOne).toHaveBeenCalledWith(
+                JobApplication,
+                { id: 'app-1', user: 'user-1' },
+                expect.anything(),
+            );
+            expect(result.id).toBe('app-1');
+            expect(result.jobTitle).toBe('Developer');
         });
 
         it('throws NotFoundException when application not found', async () => {
@@ -82,15 +93,11 @@ describe('ApplicationsService', () => {
         });
 
         it('throws NotFoundException when user does not own the application', async () => {
-            mockEm.findOne.mockResolvedValue({
-                ...mockApplication,
-                listing: {
-                    ...mockApplication.listing,
-                    source: { user: { id: 'other-user' } },
-                },
-            });
+            // Ownership is enforced by scoping the query to { id, user: userId }.
+            // A mis-owned application is indistinguishable from not-found at the query level.
+            mockEm.findOne.mockResolvedValue(null);
 
-            await expect(service.findOne('app-1', 'user-1')).rejects.toThrow(NotFoundException);
+            await expect(service.findOne('app-1', 'other-user')).rejects.toThrow(NotFoundException);
         });
     });
 });
