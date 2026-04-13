@@ -72,7 +72,10 @@ export class JobSourcePresetSeeder extends Seeder {
             const existing = await em.findOne(JobSourcePreset, { name: presetData.name });
 
             if (existing) {
-                console.log(`Preset already exists, skipping: ${presetData.name}`);
+                existing.baseUrl = presetData.baseUrl;
+                existing.filterConfig = presetData.filterConfig;
+                existing.defaultLanguage = presetData.defaultLanguage;
+                console.log(`Updated preset: ${presetData.name}`);
             } else {
                 em.create(JobSourcePreset, presetData);
                 console.log(`Created preset: ${presetData.name}`);
