@@ -5,7 +5,7 @@ Management of built-in JobSourcePresets and user-configured JobSource instances,
 ## Requirements
 
 ### Requirement: JobSourcePreset seed data
-The system SHALL seed the database with built-in `JobSourcePreset` records on first run: TE-palvelut, Duunitori, Oikotie Työpaikat, Indeed Finland, Kuntarekry, and Valtiolle.fi. Each preset includes `baseUrl`, `filterConfig`, `defaultLanguage`, and `defaultPollingInterval`.
+The system SHALL seed the database with built-in `JobSourcePreset` records on first run: TE-palvelut, Duunitori, Oikotie Työpaikat, Indeed Finland, Kuntarekry, and Valtiolle.fi. Each preset SHALL include `baseUrl`, `filterConfig` (available filter fields and URL param mappings for feed construction), and `defaultLanguage`. `lastPolledAt` SHALL be null on initial seed. Polling cadence is hardcoded on the server — no `pollingInterval` field is stored on the preset.
 
 #### Scenario: Presets available after migration
 - **WHEN** the database migrations and seed run
@@ -19,11 +19,11 @@ The system SHALL expose a `GET /job-source-presets` endpoint returning all avail
 - **THEN** all 6 built-in presets are returned
 
 ### Requirement: JobSource CRUD scoped to authenticated user
-The system SHALL expose JSON:API endpoints for creating, reading, updating, and deleting `JobSource` instances. Each JobSource is linked to a `JobSourcePreset`. All operations SHALL be scoped to the authenticated user — a user SHALL only see and manage their own sources.
+The system SHALL expose JSON:API endpoints for creating, reading, updating, and deleting `JobSource` instances. Each JobSource is a subscription linking an authenticated user to a `JobSourcePreset`, with a user-supplied `filterConfig` used as a post-ingest listing filter. All operations SHALL be scoped to the authenticated user — a user SHALL only see and manage their own sources.
 
 #### Scenario: Create a job source
 - **WHEN** a POST request is made to `/job-sources` with a preset reference, label, and filters
-- **THEN** a new active JobSource is created linked to the authenticated user
+- **THEN** a new active JobSource subscription is created linked to the authenticated user
 
 #### Scenario: User sees only their own sources
 - **WHEN** a GET request is made to `/job-sources`
@@ -35,15 +35,19 @@ The system SHALL expose JSON:API endpoints for creating, reading, updating, and 
 
 #### Scenario: Toggle active state
 - **WHEN** a PATCH request sets `active: false` on a JobSource
-- **THEN** the cron job skips that source on the next polling cycle
+- **THEN** the subscription is excluded from fan-out when new listings are ingested for its preset
 
-#### Scenario: Multiple sources from same preset
-- **WHEN** two JobSources are created from the same preset with different filter values
-- **THEN** both sources are polled independently
+#### Scenario: Multiple subscriptions from same preset
+- **WHEN** two JobSources are created from the same preset with different filterConfig values
+- **THEN** the preset feed is fetched once and both subscriptions independently evaluate their filterConfig against each new listing
 
 ### Requirement: Filter config enforcement
-The system SHALL validate that filter keys provided on a `JobSource` match the `filterConfig` defined on its preset. Unknown filter keys SHALL be rejected with HTTP 422.
+The system SHALL validate that filter keys provided on a `JobSource` match the post-ingest listing fields defined in the preset's `filterConfig` schema. Valid filter keys are `title`, `company`, `description`, and `location`. Unknown filter keys SHALL be rejected with HTTP 422.
 
 #### Scenario: Invalid filter key
-- **WHEN** a POST to `/job-sources` includes a filter key not defined in the preset's filterConfig
+- **WHEN** a POST to `/job-sources` includes a filter key not in `{ title, company, description, location }`
 - **THEN** the response returns HTTP 422 with a validation error
+
+#### Scenario: Valid filter key accepted
+- **WHEN** a POST to `/job-sources` includes `filterConfig: { title: "engineer" }`
+- **THEN** the JobSource is created successfully
