@@ -20,7 +20,7 @@ export interface JobSourcePreset {
     baseUrl: string;
     filterConfig: Record<string, string>;
     defaultLanguage: 'fi' | 'en';
-    defaultPollingInterval: number;
+    lastPolledAt: Date | null;
 }
 
 export interface JobSource {
@@ -28,16 +28,16 @@ export interface JobSource {
     userId: string;
     presetId: string;
     label: string;
+    /** Post-ingest listing filter: keys map to listing fields (title, company, description, location).
+     *  AND-logic, case-insensitive substring match. Empty object passes all listings. */
     filters: Record<string, string>;
-    language?: 'fi' | 'en';
-    pollingInterval: number;
     active: boolean;
     createdAt: string;
 }
 
 export interface JobListing {
     id: string;
-    sourceId: string;
+    presetId: string;
     externalId: string;
     url: string;
     title: string;
@@ -50,6 +50,7 @@ export interface JobListing {
 export interface JobApplication {
     id: string;
     listingId: string;
+    userId?: string;
     matched: boolean;
     matchScore?: number;
     matchRationale?: string;

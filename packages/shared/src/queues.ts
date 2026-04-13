@@ -1,12 +1,13 @@
 import type { JobListing } from './entities/jobs';
 
 export interface IngestionJobPayload {
-    sourceId: string;
-    listing: Omit<JobListing, 'id' | 'sourceId'>;
+    presetId: string;
+    listing: Omit<JobListing, 'id' | 'presetId'>;
 }
 
 export interface MatchingJobPayload {
     listingId: string;
+    jobSourceId: string;
 }
 
 export interface GenerationJobPayload {
