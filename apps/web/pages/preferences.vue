@@ -15,7 +15,7 @@
                 <UFormField :label="$t('preferences.roleLabel')"
                     name="role">
                     <UInput
-                        v-model="prefs.role"
+                        v-model="prefs.targetRole"
                         type="text"
                         placeholder="e.g. Software Engineer"
                         class="w-full"
@@ -121,21 +121,21 @@ const { t } = useI18n()
 interface JobPreferences {
     id?: string
     locations: string[]
-    role: string
+    targetRole: string
     seniority: string
     salaryMin: number | null
     salaryMax: number | null
-    industries: string[]
+    desiredIndustries: string[]
     defaultLanguage: string
 }
 
 const prefs = ref<JobPreferences>({
     locations: [],
-    role: '',
+    targetRole: '',
     seniority: 'any',
     salaryMin: null,
     salaryMax: null,
-    industries: [],
+    desiredIndustries: [],
     defaultLanguage: 'fi',
 })
 
@@ -153,7 +153,7 @@ onMounted(async () => {
             prefsId.value = data.id ?? null
             prefs.value = { ...data, seniority: data.seniority || 'any' }
             locationsInput.value = (data.locations ?? []).join(', ')
-            industriesInput.value = (data.industries ?? []).join(', ')
+            industriesInput.value = (data.desiredIndustries ?? []).join(', ')
         }
     } catch (e: unknown) {
         const status = (e as { response?: { status?: number } })?.response?.status
@@ -166,7 +166,7 @@ async function save() {
     saveMessage.value = ''
     saveFailed.value = false
     prefs.value.locations = locationsInput.value.split(',').map((s) => s.trim()).filter(Boolean)
-    prefs.value.industries = industriesInput.value.split(',').map((s) => s.trim()).filter(Boolean)
+    prefs.value.desiredIndustries = industriesInput.value.split(',').map((s) => s.trim()).filter(Boolean)
     try {
         const method = prefsId.value ? 'PATCH' : 'POST'
         const path = '/preferences'
@@ -195,6 +195,5 @@ const seniorityOptions = computed(() => [
 const languageOptions = computed(() => [
     { label: t('preferences.languageFinnish'), value: 'fi' },
     { label: t('preferences.languageEnglish'), value: 'en' },
-    { label: t('preferences.languageSwedish'), value: 'sv' },
 ])
 </script>

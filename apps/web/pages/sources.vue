@@ -92,10 +92,6 @@
                             {{ source.presetName }}
                         </p>
 
-                        <p class="text-xs mt-0.5"
-                            style="color: var(--color-text-faint)">
-                            {{ $t('sources.pollingInterval', { minutes: source.pollingInterval, language: source.language.toUpperCase() }) }}
-                        </p>
                     </div>
 
                     <div class="flex items-center gap-3">
@@ -134,28 +130,6 @@
         >
             <template #body>
                 <div class="space-y-4">
-                    <UFormField :label="$t('sources.languageLabel')"
-                        name="language">
-                        <USelect
-                            v-model="addForm.language"
-                            :items="languageOptions"
-                            value-key="value"
-                            label-key="label"
-                            class="w-full"
-                        />
-                    </UFormField>
-
-                    <UFormField :label="$t('sources.pollingIntervalLabel')"
-                        name="pollingInterval">
-                        <UInput
-                            v-model.number="addForm.pollingInterval"
-                            type="number"
-                            :min="5"
-                            :max="1440"
-                            class="w-full"
-                        />
-                    </UFormField>
-
                     <template v-if="selectedPreset?.filterConfig?.length">
                         <p class="text-xs font-semibold uppercase tracking-widest"
                             style="color: var(--color-text-faint)">
@@ -221,7 +195,6 @@ interface JobSourcePreset {
     name: string
     baseUrl: string
     defaultLanguage: string
-    defaultPollingInterval: number
     filterConfig: FilterConfigField[]
 }
 
@@ -230,8 +203,6 @@ interface JobSource {
     presetId: string
     presetName: string
     active: boolean
-    language: string
-    pollingInterval: number
     filters: Record<string, string>
 }
 
@@ -242,9 +213,7 @@ const loadError = ref('')
 // Modal state
 const showAddModal = ref(false)
 const selectedPreset = ref<JobSourcePreset | null>(null)
-const addForm = ref<{ language: string; pollingInterval: number; filters: Record<string, string> }>({
-    language: '',
-    pollingInterval: 60,
+const addForm = ref<{ filters: Record<string, string> }>({
     filters: {},
 })
 const addError = ref('')
@@ -266,8 +235,6 @@ onMounted(async () => {
 function openAddModal(preset: JobSourcePreset) {
     selectedPreset.value = preset
     addForm.value = {
-        language: preset.defaultLanguage,
-        pollingInterval: preset.defaultPollingInterval,
         filters: {},
     }
     addError.value = ''
@@ -283,8 +250,6 @@ async function addSource() {
             method: 'POST',
             body: {
                 presetId: selectedPreset.value.id,
-                language: addForm.value.language,
-                pollingInterval: addForm.value.pollingInterval,
                 filters: addForm.value.filters,
             },
         })
@@ -320,9 +285,4 @@ async function deleteSource(id: string) {
     }
 }
 
-const languageOptions = computed(() => [
-    { label: t('preferences.languageFinnish'), value: 'fi' },
-    { label: t('preferences.languageEnglish'), value: 'en' },
-    { label: t('preferences.languageSwedish'), value: 'sv' },
-])
 </script>
