@@ -110,8 +110,8 @@ export class JobSourcesService {
         };
     }
 
-    private validateFilterKeys(preset: JobSourcePreset, filters: Record<string, string>): void {
-        const validKeys = preset.filterConfig.map((f) => f.key);
+    private validateFilterKeys(_preset: JobSourcePreset, filters: Record<string, string>): void {
+        const validKeys = ['title', 'company', 'description'];
         const invalidKeys = Object.keys(filters).filter((key) => !validKeys.includes(key));
         if (invalidKeys.length > 0) {
             throw new UnprocessableEntityException(`Invalid filter keys: ${invalidKeys.join(', ')}`);
