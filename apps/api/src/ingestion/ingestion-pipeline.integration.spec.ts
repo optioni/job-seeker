@@ -28,10 +28,14 @@ const mockListing = {
 
 const savedListing = { id: 'listing-integration-1', ...mockListing };
 
+const mockSubscription = { id: 'source-integration-1', filters: {} };
+
 const mockForkedEm = {
-    getReference: vi.fn().mockReturnValue({ id: 'source-1' }),
+    getReference: vi.fn().mockReturnValue({ id: 'preset-1' }),
     create: vi.fn().mockReturnValue(savedListing),
-    persistAndFlush: vi.fn(),
+    persist: vi.fn(),
+    flush: vi.fn(),
+    find: vi.fn().mockResolvedValue([mockSubscription]),
 };
 
 const mockEm = {
@@ -50,6 +54,7 @@ describe('IngestionProcessor → MatchingQueue integration', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
+        mockForkedEm.find.mockResolvedValue([mockSubscription]);
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
@@ -72,9 +77,9 @@ describe('IngestionProcessor → MatchingQueue integration', () => {
         matchingQueue = module.get<Queue>(getQueueToken('matching'));
     });
 
-    it('persists a JobListing and enqueues it to the matching queue', async () => {
+    it('persists a JobListing and fans out to matching queue per active subscription', async () => {
         const payload: IngestionJobPayload = {
-            sourceId: 'source-1',
+            presetId: 'preset-1',
             listing: mockListing as IngestionJobPayload['listing'],
         };
 
@@ -85,10 +90,14 @@ describe('IngestionProcessor → MatchingQueue integration', () => {
             expect.anything(),
             expect.objectContaining({ externalId: 'ext-integration-1' }),
         );
-        expect(mockForkedEm.persistAndFlush).toHaveBeenCalled();
+        expect(mockForkedEm.persist).toHaveBeenCalled();
+        expect(mockForkedEm.flush).toHaveBeenCalled();
 
-        // Matching queue received the saved listing ID
-        expect(mockMatchingQueue.add).toHaveBeenCalledWith({ listingId: 'listing-integration-1' });
+        // Matching queue received listing + subscription IDs
+        expect(mockMatchingQueue.add).toHaveBeenCalledWith({
+            listingId: 'listing-integration-1',
+            jobSourceId: 'source-integration-1',
+        });
         expect(matchingQueue.add).toHaveBeenCalled();
     });
 });

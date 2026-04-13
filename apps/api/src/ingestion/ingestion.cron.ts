@@ -6,7 +6,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import type { Queue } from 'bull';
 
 import { JobListing } from '../entities/job-listing.entity';
-import { JobSource } from '../entities/job-source.entity';
+import { JobSourcePreset } from '../entities/job-source-preset.entity';
 import { RssAdapter } from './rss.adapter';
 
 @Injectable()
@@ -19,42 +19,36 @@ export class IngestionCron {
         private readonly rssAdapter: RssAdapter,
     ) {}
 
-    @Cron(CronExpression.EVERY_HOUR)
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async pollAllSources() {
-        const em = this.em.fork();
-        const sources = await em.find(JobSource, { active: true }, { populate: ['preset'] });
+        const presets = await this.em.fork().find(
+            JobSourcePreset,
+            { jobSources: { active: true } },
+        );
 
-        for (const source of sources) {
+        for (const preset of presets) {
             try {
-                await this.pollSource(source, em);
+                await this.pollPreset(preset);
             } catch (error) {
-                this.logger.error(`Failed to poll source ${source.id}: ${String(error)}`);
+                this.logger.error(`Failed to poll preset ${preset.id}: ${String(error)}`);
             }
         }
     }
 
-    private async pollSource(source: JobSource, em: EntityManager) {
-        const urlParameters: Record<string, string> = {};
-        for (const [key, value] of Object.entries(source.filters ?? {})) {
-            const field = source.preset.filterConfig.find((f) => f.key === key);
-            if (field) {
-                urlParameters[field.urlParam] = value;
-            }
-        }
+    private async pollPreset(preset: JobSourcePreset) {
+        const em = this.em.fork();
+        const candidates = await this.rssAdapter.fetchListings(preset.baseUrl, {});
 
-        const candidates = await this.rssAdapter.fetchListings(source.preset.baseUrl, urlParameters);
-
-        // eslint-disable-next-line unicorn/no-array-method-this-argument
-        const existing = await em.find(JobListing, { source });
-        const existingSet = new Set(existing.map((listing) => `${listing.company}|${listing.title}`));
+        const existing = await em.find(JobListing, { preset });
+        const existingIds = new Set(existing.map((listing) => listing.externalId));
 
         const newCandidates = candidates.filter(
-            (candidate) => !existingSet.has(`${candidate.company}|${candidate.title}`),
+            (candidate) => !existingIds.has(candidate.externalId),
         );
 
         for (const candidate of newCandidates) {
             const payload: IngestionJobPayload = {
-                sourceId: source.id,
+                presetId: preset.id,
                 listing: {
                     ...candidate,
                     scrapedAt: candidate.scrapedAt.toISOString(),
@@ -64,6 +58,9 @@ export class IngestionCron {
             await this.ingestionQueue.add(payload);
         }
 
-        this.logger.log(`Source ${source.id}: ${newCandidates.length}/${candidates.length} new listings enqueued`);
+        preset.lastPolledAt = new Date();
+        await em.flush();
+
+        this.logger.log(`Preset ${preset.id}: ${newCandidates.length}/${candidates.length} new listings enqueued`);
     }
 }

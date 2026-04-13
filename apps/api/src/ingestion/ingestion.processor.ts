@@ -6,6 +6,28 @@ import type { Job, Queue } from 'bull';
 
 import { JobListing } from '../entities/job-listing.entity';
 import { JobSource } from '../entities/job-source.entity';
+import { JobSourcePreset } from '../entities/job-source-preset.entity';
+
+function evaluateFilterConfig(listing: JobListing, filterConfig: Record<string, string>): boolean {
+    if (Object.keys(filterConfig).length === 0) {
+        return true;
+    }
+
+    const fields: Record<string, string> = {
+        title: listing.title,
+        company: listing.company,
+        description: listing.description,
+    };
+
+    for (const [key, value] of Object.entries(filterConfig)) {
+        const fieldValue = fields[key] ?? '';
+        if (!fieldValue.toLowerCase().includes(value.toLowerCase())) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 @Processor('ingestion')
 export class IngestionProcessor {
@@ -19,12 +41,12 @@ export class IngestionProcessor {
     @Process()
     async handle(job: Job<IngestionJobPayload>) {
         const em = this.em.fork();
-        const { sourceId, listing } = job.data;
+        const { presetId, listing } = job.data;
 
-        const source = em.getReference(JobSource, sourceId);
+        const preset = em.getReference(JobSourcePreset, presetId);
 
         const jobListing = em.create(JobListing, {
-            source,
+            preset,
             externalId: listing.externalId,
             url: listing.url,
             title: listing.title,
@@ -37,9 +59,18 @@ export class IngestionProcessor {
         em.persist(jobListing);
         await em.flush();
 
-        const payload: MatchingJobPayload = { listingId: jobListing.id };
-        await this.matchingQueue.add(payload);
+        const activeSubscriptions = await em.find(JobSource, { preset, active: true });
 
-        this.logger.log(`Ingested listing ${jobListing.id}: ${jobListing.title}`);
+        for (const subscription of activeSubscriptions) {
+            if (evaluateFilterConfig(jobListing, subscription.filters)) {
+                const payload: MatchingJobPayload = {
+                    listingId: jobListing.id,
+                    jobSourceId: subscription.id,
+                };
+                await this.matchingQueue.add(payload);
+            }
+        }
+
+        this.logger.log(`Ingested listing ${jobListing.id}: ${jobListing.title} (fanned out to ${activeSubscriptions.length} subscriptions)`);
     }
 }

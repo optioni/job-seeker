@@ -19,10 +19,14 @@ const mockListing = {
     scrapedAt: new Date().toISOString(),
 };
 
+const mockSubscription = { id: 'source-1', filters: {} };
+
 const mockForkedEm = {
-    getReference: vi.fn().mockReturnValue({ id: 'source-1' }),
+    getReference: vi.fn().mockReturnValue({ id: 'preset-1' }),
     create: vi.fn().mockReturnValue({ id: 'listing-1', ...mockListing }),
-    persistAndFlush: vi.fn(),
+    persist: vi.fn(),
+    flush: vi.fn(),
+    find: vi.fn().mockResolvedValue([mockSubscription]),
 };
 
 const mockEm = {
@@ -38,6 +42,7 @@ describe('IngestionProcessor', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
+        mockForkedEm.find.mockResolvedValue([mockSubscription]);
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 IngestionProcessor,
@@ -52,7 +57,7 @@ describe('IngestionProcessor', () => {
     it('persists a new JobListing entity', async () => {
         const job = {
             data: {
-                sourceId: 'source-1',
+                presetId: 'preset-1',
                 listing: mockListing,
             } as IngestionJobPayload,
         } as Job<IngestionJobPayload>;
@@ -67,19 +72,61 @@ describe('IngestionProcessor', () => {
                 company: 'Acme',
             }),
         );
-        expect(mockForkedEm.persistAndFlush).toHaveBeenCalled();
+        expect(mockForkedEm.persist).toHaveBeenCalled();
+        expect(mockForkedEm.flush).toHaveBeenCalled();
     });
 
-    it('enqueues the listing ID to the matching queue', async () => {
+    it('fans out to active subscriptions and enqueues to matching queue', async () => {
         const job = {
             data: {
-                sourceId: 'source-1',
+                presetId: 'preset-1',
                 listing: mockListing,
             } as IngestionJobPayload,
         } as Job<IngestionJobPayload>;
 
         await processor.handle(job);
 
-        expect(mockMatchingQueue.add).toHaveBeenCalledWith({ listingId: 'listing-1' });
+        expect(mockMatchingQueue.add).toHaveBeenCalledWith({
+            listingId: 'listing-1',
+            jobSourceId: 'source-1',
+        });
+    });
+
+    it('does not enqueue to matching queue when subscription filter does not match', async () => {
+        mockForkedEm.find.mockResolvedValue([
+            { id: 'source-1', filters: { title: 'nonexistent' } },
+        ]);
+
+        const job = {
+            data: {
+                presetId: 'preset-1',
+                listing: mockListing,
+            } as IngestionJobPayload,
+        } as Job<IngestionJobPayload>;
+
+        await processor.handle(job);
+
+        expect(mockMatchingQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('enqueues once per passing subscription when multiple active subscriptions exist', async () => {
+        mockForkedEm.find.mockResolvedValue([
+            { id: 'source-1', filters: {} },
+            { id: 'source-2', filters: { title: 'Developer' } },
+            { id: 'source-3', filters: { title: 'nonexistent' } },
+        ]);
+
+        const job = {
+            data: {
+                presetId: 'preset-1',
+                listing: mockListing,
+            } as IngestionJobPayload,
+        } as Job<IngestionJobPayload>;
+
+        await processor.handle(job);
+
+        expect(mockMatchingQueue.add).toHaveBeenCalledTimes(2);
+        expect(mockMatchingQueue.add).toHaveBeenCalledWith({ listingId: 'listing-1', jobSourceId: 'source-1' });
+        expect(mockMatchingQueue.add).toHaveBeenCalledWith({ listingId: 'listing-1', jobSourceId: 'source-2' });
     });
 });

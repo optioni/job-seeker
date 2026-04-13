@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 /**
- * Tests for the deduplication logic used in IngestionCron.pollSource.
- * The dedup set is keyed by `${company}|${title}` (see ingestion.cron.ts).
+ * Tests for the deduplication logic used in IngestionCron.pollPreset.
+ * The dedup set is keyed by `externalId` (see ingestion.cron.ts), matching
+ * the DB unique constraint on (preset_id, external_id).
  */
 
 interface Candidate {
@@ -12,36 +13,31 @@ interface Candidate {
 }
 
 interface ExistingListing {
-    company: string
-    title: string
+    externalId: string
 }
 
 function deduplicate(candidates: Candidate[], existing: ExistingListing[]): Candidate[] {
-    const existingSet = new Set(existing.map((listing) => `${listing.company}|${listing.title}`));
-    return candidates.filter((candidate) => !existingSet.has(`${candidate.company}|${candidate.title}`));
+    const existingIds = new Set(existing.map((listing) => listing.externalId));
+    return candidates.filter((candidate) => !existingIds.has(candidate.externalId));
 }
 
 describe('Deduplication logic', () => {
-    it('filters out a candidate that matches an existing listing by company + title', () => {
+    it('filters out a candidate whose externalId already exists', () => {
         const candidates: Candidate[] = [
             { company: 'Acme Corp', title: 'Senior Developer', externalId: 'id-1' },
         ];
-        const existing: ExistingListing[] = [
-            { company: 'Acme Corp', title: 'Senior Developer' },
-        ];
+        const existing: ExistingListing[] = [{ externalId: 'id-1' }];
 
         const result = deduplicate(candidates, existing);
 
         expect(result).toHaveLength(0);
     });
 
-    it('passes through a candidate with no matching existing listing', () => {
+    it('passes through a candidate with a new externalId', () => {
         const candidates: Candidate[] = [
             { company: 'Acme Corp', title: 'Junior Developer', externalId: 'id-2' },
         ];
-        const existing: ExistingListing[] = [
-            { company: 'Acme Corp', title: 'Senior Developer' },
-        ];
+        const existing: ExistingListing[] = [{ externalId: 'id-1' }];
 
         const result = deduplicate(candidates, existing);
 
@@ -49,20 +45,27 @@ describe('Deduplication logic', () => {
         expect(result[0].externalId).toBe('id-2');
     });
 
-    it('detects cross-board duplicates with same company + title', () => {
+    it('allows same company+title if externalId differs (re-post scenario)', () => {
         const candidates: Candidate[] = [
-            { company: 'TechFirm', title: 'Backend Engineer', externalId: 'board-b-1' },
-            { company: 'TechFirm', title: 'Frontend Engineer', externalId: 'board-b-2' },
+            { company: 'Acme Corp', title: 'Senior Developer', externalId: 'id-new' },
         ];
-        const existing: ExistingListing[] = [
-            // Previously ingested from a different board
-            { company: 'TechFirm', title: 'Backend Engineer' },
-        ];
+        const existing: ExistingListing[] = [{ externalId: 'id-old' }];
 
         const result = deduplicate(candidates, existing);
 
         expect(result).toHaveLength(1);
-        expect(result[0].externalId).toBe('board-b-2');
+        expect(result[0].externalId).toBe('id-new');
+    });
+
+    it('filters duplicate externalId regardless of different title', () => {
+        const candidates: Candidate[] = [
+            { company: 'TechFirm', title: 'Backend Engineer', externalId: 'shared-id' },
+        ];
+        const existing: ExistingListing[] = [{ externalId: 'shared-id' }];
+
+        const result = deduplicate(candidates, existing);
+
+        expect(result).toHaveLength(0);
     });
 
     it('passes through all candidates when existing list is empty', () => {
@@ -76,19 +79,16 @@ describe('Deduplication logic', () => {
         expect(result).toHaveLength(2);
     });
 
-    it('only matches exact company+title combination', () => {
+    it('handles mixed new and existing externalIds correctly', () => {
         const candidates: Candidate[] = [
-            { company: 'Acme Corp', title: 'Developer', externalId: 'id-1' },
+            { company: 'TechFirm', title: 'Backend Engineer', externalId: 'board-b-1' },
+            { company: 'TechFirm', title: 'Frontend Engineer', externalId: 'board-b-2' },
         ];
-        const existing: ExistingListing[] = [
-            // different title
-            { company: 'Acme Corp', title: 'Senior Developer' },
-            // different company
-            { company: 'Other Corp', title: 'Developer' },
-        ];
+        const existing: ExistingListing[] = [{ externalId: 'board-b-1' }];
 
         const result = deduplicate(candidates, existing);
 
         expect(result).toHaveLength(1);
+        expect(result[0].externalId).toBe('board-b-2');
     });
 });
