@@ -4,16 +4,16 @@ import {
 } from '@mikro-orm/decorators/legacy';
 
 import { JobApplication } from './job-application.entity';
-import { JobSource } from './job-source.entity';
+import { JobSourcePreset } from './job-source-preset.entity';
 
 @Entity({ tableName: 'job_listings' })
-@Unique({ properties: ['source', 'externalId'] })
+@Unique({ properties: ['preset', 'externalId'] })
 export class JobListing {
     @PrimaryKey({ type: 'uuid' })
     id: string = crypto.randomUUID();
 
-    @ManyToOne(() => JobSource)
-    source!: Rel<JobSource>;
+    @ManyToOne(() => JobSourcePreset)
+    preset!: Rel<JobSourcePreset>;
 
     @Property()
     externalId!: string;

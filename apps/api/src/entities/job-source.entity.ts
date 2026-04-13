@@ -1,9 +1,8 @@
-import { Collection, type Rel } from '@mikro-orm/core';
+import { type Rel } from '@mikro-orm/core';
 import {
-    Entity, ManyToOne, OneToMany, PrimaryKey, Property,
+    Entity, ManyToOne, PrimaryKey, Property,
 } from '@mikro-orm/decorators/legacy';
 
-import { JobListing } from './job-listing.entity';
 import { JobSourcePreset } from './job-source-preset.entity';
 import { User } from './user.entity';
 
@@ -29,7 +28,4 @@ export class JobSource {
 
     @Property()
     createdAt: Date = new Date();
-
-    @OneToMany(() => JobListing, (listing) => listing.source)
-    jobListings = new Collection<JobListing>(this);
 }

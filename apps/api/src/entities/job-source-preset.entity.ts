@@ -28,6 +28,9 @@ export class JobSourcePreset {
     @Property({ type: 'string' })
     defaultLanguage!: 'fi' | 'en';
 
+    @Property({ type: 'timestamptz', nullable: true })
+    lastPolledAt?: Date | null;
+
     @OneToMany(() => JobSource, (jobSource) => jobSource.preset)
     jobSources = new Collection<JobSource>(this);
 }

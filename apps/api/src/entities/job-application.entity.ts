@@ -1,7 +1,8 @@
 import { type Rel } from '@mikro-orm/core';
-import { Entity, OneToOne, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
+import { Entity, ManyToOne, OneToOne, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 
 import { JobListing } from './job-listing.entity';
+import { User } from './user.entity';
 
 @Entity({ tableName: 'job_applications' })
 export class JobApplication {
@@ -10,6 +11,9 @@ export class JobApplication {
 
     @OneToOne(() => JobListing, (listing) => listing.application, { owner: true })
     listing!: Rel<JobListing>;
+
+    @ManyToOne(() => User, { nullable: true })
+    user?: Rel<User>;
 
     @Property({ type: 'boolean' })
     matched!: boolean;
