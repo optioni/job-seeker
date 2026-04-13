@@ -11,6 +11,7 @@ import { CvProfile } from '../entities/cv-profile.entity';
 import { JobApplication } from '../entities/job-application.entity';
 import { JobListing } from '../entities/job-listing.entity';
 import { JobPreferences } from '../entities/job-preferences.entity';
+import { JobSource } from '../entities/job-source.entity';
 import { formatCvForMatching } from './format-cv';
 
 const matchSchema = z.object({
@@ -31,13 +32,15 @@ export class MatchingProcessor {
     @Process()
     async handle(job: Job<MatchingJobPayload>) {
         const em = this.em.fork();
-        const { listingId } = job.data;
+        const { listingId, jobSourceId } = job.data;
 
-        const listing = await em.findOneOrFail(JobListing, listingId, {
-            populate: ['source', 'source.user', 'source.preset'] as const,
+        const jobSource = await em.findOneOrFail(JobSource, jobSourceId, {
+            populate: ['user'] as const,
         });
 
-        const userId = listing.source.user.id;
+        const userId = jobSource.user.id;
+
+        const listing = await em.findOneOrFail(JobListing, listingId);
 
         const cvProfile = await em.findOne(
             CvProfile,
@@ -80,6 +83,7 @@ Provide a match decision (true/false), a score from 0-100, and a rationale.
 
         const application = em.create(JobApplication, {
             listing,
+            user: jobSource.user,
             matched: result.match,
             matchScore: result.score,
             matchRationale: result.rationale,

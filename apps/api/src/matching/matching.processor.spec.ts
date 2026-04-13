@@ -17,14 +17,18 @@ vi.mock('@ai-sdk/anthropic', () => ({
     anthropic: vi.fn().mockReturnValue('mock-model'),
 }));
 
+const mockUser = { id: 'user-1' };
+
+const mockJobSource = {
+    id: 'source-1',
+    user: mockUser,
+};
+
 const mockListing = {
     id: 'listing-1',
     title: 'Senior Developer',
     company: 'Acme Corp',
     description: 'Develop great software',
-    source: {
-        user: { id: 'user-1' },
-    },
 };
 
 const mockCvProfile = {
@@ -48,7 +52,8 @@ const mockForkedEm = {
     findOneOrFail: vi.fn(),
     findOne: vi.fn(),
     create: vi.fn().mockReturnValue(mockApplication),
-    persistAndFlush: vi.fn(),
+    persist: vi.fn(),
+    flush: vi.fn(),
 };
 
 const mockEm = {
@@ -64,7 +69,11 @@ describe('MatchingProcessor', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        mockForkedEm.findOneOrFail.mockResolvedValue(mockListing);
+        mockForkedEm.findOneOrFail.mockImplementation(async (entity: unknown) => {
+            const { JobSource } = await import('../entities/job-source.entity');
+            if (entity === JobSource) return mockJobSource;
+            return mockListing;
+        });
         mockForkedEm.findOne.mockImplementation(async (entity: unknown) => {
             if (entity === (await import('../entities/cv-profile.entity')).CvProfile) {
                 return mockCvProfile;
@@ -90,14 +99,15 @@ describe('MatchingProcessor', () => {
             object: { match: true, score: 85, rationale: 'Great fit' },
         } as Awaited<ReturnType<typeof generateObject>>);
 
-        const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;
+        const job = { data: { listingId: 'listing-1', jobSourceId: 'source-1' } } as Job<MatchingJobPayload>;
         await processor.handle(job);
 
         expect(mockForkedEm.create).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ matched: true, matchScore: 85 }),
+            expect.objectContaining({ matched: true, matchScore: 85, user: mockUser }),
         );
-        expect(mockForkedEm.persistAndFlush).toHaveBeenCalled();
+        expect(mockForkedEm.persist).toHaveBeenCalled();
+        expect(mockForkedEm.flush).toHaveBeenCalled();
         expect(mockGenerationQueue.add).toHaveBeenCalledWith({ applicationId: 'app-1' });
     });
 
@@ -107,7 +117,7 @@ describe('MatchingProcessor', () => {
             object: { match: false, score: 20, rationale: 'Not a good fit' },
         } as Awaited<ReturnType<typeof generateObject>>);
 
-        const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;
+        const job = { data: { listingId: 'listing-1', jobSourceId: 'source-1' } } as Job<MatchingJobPayload>;
         await processor.handle(job);
 
         expect(mockForkedEm.create).toHaveBeenCalledWith(
@@ -128,7 +138,7 @@ describe('MatchingProcessor', () => {
             return Promise.resolve({ defaultLanguage: 'fi' });
         });
 
-        const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;
+        const job = { data: { listingId: 'listing-1', jobSourceId: 'source-1' } } as Job<MatchingJobPayload>;
         await processor.handle(job);
 
         const callArgs = vi.mocked(generateObject).mock.calls[0][0] as { prompt: string };
@@ -146,7 +156,7 @@ describe('MatchingProcessor', () => {
             return Promise.resolve({ defaultLanguage: 'en' });
         });
 
-        const job = { data: { listingId: 'listing-1' } } as Job<MatchingJobPayload>;
+        const job = { data: { listingId: 'listing-1', jobSourceId: 'source-1' } } as Job<MatchingJobPayload>;
         await processor.handle(job);
 
         const callArgs = vi.mocked(generateObject).mock.calls[0][0] as { prompt: string };
