@@ -1,6 +1,6 @@
 services:
     postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
         ports:
             - "5432:5432"
         volumes:
@@ -13,14 +13,14 @@ services:
             - app-network
 
     redis:
-        image: redis:7-alpine
+        image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
         ports:
             - "6379:6379"
         networks:
             - app-network
 
     gotenberg:
-        image: gotenberg/gotenberg:8
+        image: gotenberg/gotenberg:8@sha256:67097317623a503ba2a6a7e9ae8db6929a1f7e1bbd88077bacf2d325fbdab923
         networks:
             - app-network
 
